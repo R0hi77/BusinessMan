@@ -1,0 +1,55 @@
+from flask import Blueprint, request,jsonify
+from schema.auth_schema  import ShopSchema
+from database.auth_model import Shop
+from database.core import db
+from auth.email_token import create_token, confirm_token,send_email
+from pydantic import ValidationError
+from werkzeug.security import generate_password_hash
+
+
+
+
+authentication_bp=Blueprint('auth',__name__,url_prefix='/api/auth')
+
+
+authentication_bp.post('/register')
+def register():
+    raw_data= request.get_json()
+    try:
+        validation_data= ShopSchema(shopName=raw_data['shop_name'],
+                              email=raw_data['email'],
+                              password=raw_data['password'])
+    except ValidationError as e:
+        return jsonify({'create shop account entry error':str(e)})
+    
+    test_email= Shop.query.filter_by(email=validation_data.email).first()
+    if test_email.isVerified is True:
+        return jsonify({"msg":"Email already exists"})
+    else:
+
+        #temporarily push to the database
+        shop=Shop(shopName=validation_data.shopName,
+                  email=validation_data.email,
+                  password=generate_password_hash(validation_data.password))
+        db.session.add(shop)
+        db.session.commit()
+
+        # send email confirmation token
+        token=create_token(validation_data.email)
+        send_email(validation_data.email,token)
+        jsonify({'msg':'confirmation email sent'})
+
+
+authentication_bp.post('/confirm')
+def confirm():
+        token= request.get_json()
+        try:
+            email=confirm_token(token)
+        except:
+            return jsonify({'msg':'Token has expired'})
+        shop = Shop.query.filter_by(email=email).first()
+        #shop_final=Shop(shopName=validation_data.shopName,email=validation_data.email,password=validation_data.password)
+        shop.isVerified=True
+        db.session.commit()
+        return jsonify({'msg':'confirmation success'})
+

@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import uuid
 
-from core import db
+from .core import db
 
 class Shop (db.Model):
     __tablename__='shops'
@@ -11,6 +11,7 @@ class Shop (db.Model):
     shopName= db.Column(db.String(255),unique=True, nullable= False)
     email = db.Column(db.String(255),unique=True, nullable=False)
     password= db.Column(db.String, nullable=False)
+    isVerified=db.Column(db.Bool, default= False)
     created= db.Column(db.DateTime, default=datetime.now())
     
 
