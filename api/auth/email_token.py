@@ -1,8 +1,13 @@
 from itsdangerous import URLSafeTimedSerializer
 from  os import environ
 from flask_mail import Mail, Message
+import ssl
 
 mail=Mail()
+
+context = ssl.create_default_context()
+context.set_ciphers('HIGH:!DH:!aNULL')
+mail.context = context
 
 
 def create_token(email):
