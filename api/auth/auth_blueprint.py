@@ -12,35 +12,47 @@ authentication_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 """
 Creating shop account
 """
+
 @authentication_bp.post('/register')
-def create_shop_account():
-    raw_data = request.get_json()
+def register():
+    raw_data= request.get_json()
     try:
-        validation_data = ShopSchema(
-            shopName=raw_data['shop_name'],
-            email=raw_data['email'],
-            password=raw_data['password']
-        )
+        validation_data= ShopSchema(shopName=raw_data['shop_name'],
+                              email=raw_data['email'],
+                              password=raw_data['password'])
     except ValidationError as e:
-        return jsonify({'create shop account entry error': str(e)}), 400
+        return jsonify({'create shop account entry error':str(e)})
+    
+    test_email= Shop.query.filter_by(email=validation_data.email).first()
+    if test_email is not None and  test_email.isVerified is True:
+        return jsonify({"msg":"Email already exists"})
+    else:
 
-    user = Shop.query.filter_by(email=validation_data.email).first()
-    if user:
-        return jsonify({'msg': 'User already exists'}), 409
+        #temporarily push to the database
+        shop=Shop(shopName=validation_data.shopName,
+                  email=validation_data.email,
+                  password=generate_password_hash(validation_data.password))
+        db.session.add(shop)
+        db.session.commit()
 
-    shop = Shop(
-        shopName=validation_data.shopName,
-        email=validation_data.email,
-        password=generate_password_hash(validation_data.password)
-    )
-    manager_password = "123456"
-    manager = Manager(password=generate_password_hash(manager_password))
-    db.session.add_all([shop, manager])
-    db.session.commit()
-    return jsonify({
-        'msg': 'Shop account successfully created. Your temporary manager pass key is {manager_password}. You are advised to set a stronger one in the settings option.'
-    }), 201
+        # send email confirmation token
+        token=create_token(validation_data.email)
+        sol=send_email(validation_data.email,token)
+        return jsonify({'msg':sol})
 
+
+@authentication_bp.post('/confirm')
+def confirm():
+        token= request.get_json()
+        try:
+            email=confirm_token(token)
+        except:
+            return jsonify({'msg':'Token has expired'})
+        shop = Shop.query.filter_by(email=email).first()
+        #shop_final=Shop(shopName=validation_data.shopName,email=validation_data.email,password=validation_data.password)
+        shop.isVerified=True
+        db.session.commit()
+        return jsonify({'msg':'confirmation success'})
 """
 Shop account login
 """
