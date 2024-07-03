@@ -17,14 +17,16 @@ class Inventory(db.Model):
     expiryDate=db.Column(db.DateTime,nullable=True)
     supplierName=db.Column(db.String(),nullable=True)
     supplierContact=db.Column(db.String(),nullable=True)
+    ShopID= db.Column(db.String(),db.ForeignKey('shop.id'),nullable=False)
 
 class Transaction(db.Model):
     __tablename__='transactions'
 
     id = db.Column(db.String(), primary_key=True)
-    productID = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     transactionDate = db.Column(db.DateTime, nullable=False)
+    ProductName=db.Column(db.String(),nullable=False)
     quantity = db.Column(db.Float, nullable=False)
-    amount = db.Column(db.Float, nullable=False)
+    cashIn = db.Column(db.Float, nullable=False)
     paymentType = db.Column(db.Enum('cash', 'mobile money', name='payment_type'), nullable=False)
+    balance=db.Column(db.Float(),default=0.00)
     InventoryID=db.Column(db.String(),db.ForeignKey('inventory.id'),nullable=False)

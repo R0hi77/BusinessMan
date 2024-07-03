@@ -69,8 +69,10 @@ def login():
 
     user = Shop.query.filter_by(email=validation_data.email).first()
     if user and check_password_hash(user.password, validation_data.password):
-        access_token = create_access_token(identity='shop')
-        refresh_token = create_refresh_token(identity='shop')
+        access_token = create_access_token(identity='shop',
+                                           additional_claims={'shop_name':user.shopName})
+        refresh_token = create_refresh_token(identity='shop',
+                                             additional_claims={'shop_name':user.shopName})
         return jsonify({
             'shop_name': user.shopName,
             'access_token': access_token,
@@ -82,16 +84,19 @@ def login():
 Login as manager
 """
 @authentication_bp.post('/loginasmanager')
+@jwt_required()
 def manager_login():
     raw_data = request.get_json()
     password = raw_data.get('password')
+    jwt=get_jwt()
+    claims=jwt['additional_claims']
     if not password:
         return jsonify({'msg': 'Password is required'}), 400
 
     manager = Manager.query.filter_by(password=generate_password_hash(password)).first()
     if manager:
-        access_token = create_access_token(identity='manager')
-        refresh_token = create_refresh_token(identity='manager')
+        access_token = create_access_token(identity='manager',additional_claims=claims)
+        refresh_token = create_refresh_token(identity='manager',additional_claims=claims)
         return jsonify({
             'user': 'manager',
             'access_token': access_token,
@@ -125,10 +130,12 @@ Login as attendant
 @jwt_required()
 def attendant_login():
     raw_data = request.get_json()
+    jwt=get_jwt()
+    claims=jwt['additional_claims']
     attendant = Attendant.query.filter_by(attendantName=raw_data['name']).first()
     if attendant and check_password_hash(attendant.password, raw_data['password']):
-        access_token = create_access_token(identity='attendant')
-        refresh_token = create_refresh_token(identity='attendant')
+        access_token = create_access_token(identity='attendant',additional_claims=claims)
+        refresh_token = create_refresh_token(identity='attendant',additional_claims=claims)
         return jsonify({
             'username': attendant.attendantName,
             'access_token': access_token,
@@ -143,8 +150,8 @@ Reset manager account password
 @jwt_required()
 def manager_reset_pass():
     data = request.get_json()
-    old_password = data.get('old_password')
-    new_password = data.get('new_password')
+    old_password = data['old_password']
+    new_password = data['new_password']
 
     if not old_password or not new_password:
         return jsonify({'msg': 'Old password and new password are required'}), 400
