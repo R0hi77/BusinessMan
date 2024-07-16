@@ -17,8 +17,8 @@ class Product(BaseModel):
     batchNumber:str
     orderQuantity:Optional[int]=None
     reorderLevel:int
-    costPrice:int
-    sellingPrice:int
+    costPrice:float
+    sellingPrice:float
     expiryDate:Optional[datetime]=None
     supplierName: Optional[str]=None
     supplierContact: Optional[str]=None

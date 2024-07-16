@@ -1,11 +1,15 @@
 from flask import Flask
 from .database.core import db
-from.database.auth_model import BlockedTokens
+from.database.model import BlockedTokens
 from dotenv import load_dotenv, dotenv_values
 from os import getenv 
 from api.auth.auth_blueprint import authentication_bp
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
+from api.inventory.inventory_blueprint import inventory_blueprint
+from api.notification.events import socketio
+from api.notification.extensions import init_scheduler
+
 # from setuptools import strtobool
 from os import environ
 load_dotenv()
@@ -13,6 +17,8 @@ config = dotenv_values()
 
 def create_app(test_config=config):
     app= Flask(__name__,instance_relative_config=True)
+
+    
      
     
     if test_config is None:
@@ -21,6 +27,7 @@ def create_app(test_config=config):
             SQLALCHEMY_DATABASE_URI=getenv('SQLALCHEMY_DATABASE_URI'),
             SECURITY_PASSWORD_SALT=getenv('SECURITY_PASSWORD_SALT'),
             JWT_SECRET_KEY=getenv('JWT_SECRET_KEY'),
+            OTP_SECRET_KEY=getenv('OTP_SECRET_KEY'),
             MAIL_SERVER=getenv('MAIL_SERVER'),
             MAIL_USERNAME=getenv('MAIL_USERNAME'),
             MAIL_PASSWORD=getenv('MAIL_PASSWORD'),
@@ -33,11 +40,14 @@ def create_app(test_config=config):
     jwt=JWTManager(app)
     migrate= Migrate(app,db)
     db.init_app(app)
-   
+    socketio.init_app(app)
+    init_scheduler(app)
+    
    
     # register blueprint
     
     app.register_blueprint(authentication_bp)
+    app.register_blueprint(inventory_blueprint)
 
 # jwt call back fucntions
     @jwt.token_in_blocklist_loader

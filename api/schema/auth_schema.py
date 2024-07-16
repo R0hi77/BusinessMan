@@ -4,11 +4,11 @@ from pydantic import BaseModel, EmailStr, Field
 
 class ShopSchema(BaseModel):
     shopName: str
-    email: EmailStr
-    password: str = Field(min_length=6)
+    number: str
+    password: str = Field(min_length=8)
 
 class Login(BaseModel):
-    email: EmailStr
+    number: str
     password: str
 
    
