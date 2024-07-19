@@ -69,41 +69,30 @@ def complete_transact():
     for item in inventory_list:
         if item.quantity<=item.reorder_level:
             low_stock[item.name]=item.quantity
+    if low_stock is not None:
+        client=requests.Session()
+        url = "https://sms.arkesel.com/sms/api"
+        params = {
+            "action": "send-sms",
+            "api_key": 'V1dSaWhlbWFsb3BVc0lISHZZc1A',
+            "to": session['shop_number'],
+            "from": "SaleSmart",
+            "sms": f"Low stock prompt. Take note and restock {low_stock}"
+            }
+        try:
+            response = client.get(url, params=params)
+            response.raise_for_status()
+            response_data=response.json()
+            
 
-    client=requests.Session()
-    url = "https://sms.arkesel.com/sms/api"
-    params = {
-        "action": "send-sms",
-        "api_key": 'V1dSaWhlbWFsb3BVc0lISHZZc1A',
-        "to": session['shop_number'],
-        "from": "SaleSmart",
-        "sms": f"Low stock prompt. Take note and restock {low_stock}"
-        }
-    try:
-        response = client.get(url, params=params)
-        response.raise_for_status()
-        response_data=response.json()
+            return jsonify ({'msg':"successfully sent",
+                                'response':response_data
+                                })
+                
+        except requests.exceptions.RequestException as e:
         
-
-        return jsonify ({'msg':"successfully sent",
-                             'response':response_data
-                             })
+            return jsonify({"error": "Restocking prompt error", "details": str(e)}), 500
             
-    except requests.exceptions.RequestException as e:
-       
-       return jsonify({"error": "Restocking prompt error", "details": str(e)}), 500
-            
-    
-
-
-            
-   
-
-
-    
-
-    
-    
     return jsonify({'msg':'Transaction complete'})
 
 
