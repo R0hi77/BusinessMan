@@ -62,7 +62,7 @@ def register():
             return jsonify ({'msg':"successfully sent",
                              "otp":otp,
                              'response':response_data
-                             })
+                             }),200
             
         except requests.exceptions.RequestException as e:
             db.session.delete(shop)  # Rollback shop creation if OTP sending fails
@@ -88,11 +88,11 @@ def confirm():
             if shop:
                 shop.is_verified=True
                 db.session.commit()
-                return jsonify({'msg':'Shop account succesfully created'})
+                return jsonify({'msg':'Shop account succesfully created'}),200
             else:
-                return jsonify({'msg':'Shop nnumber not found'})
+                return jsonify({'msg':'Shop number not found'})
         else:
-            return jsonify({'msg':'Invalid OTP entered'})
+            return jsonify({'msg':'Invalid OTP entered'}),400
 
 
 

@@ -7,8 +7,10 @@ from api.auth.auth_blueprint import authentication_bp
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from api.inventory.inventory_blueprint import inventory_blueprint
-from api.notification.events import socketio
-from api.notification.extensions import init_scheduler
+from api.transactions.transaction_blueprint import transaction_bp
+# from api.notification.events import socketio
+# from api.notification.extensions import socketio, scheduler, init_scheduler
+from flask import Flask, g
 
 # from setuptools import strtobool
 from os import environ
@@ -17,6 +19,14 @@ config = dotenv_values()
 
 def create_app(test_config=config):
     app= Flask(__name__,instance_relative_config=True)
+
+    # with app.app_context():
+    #     # Set the shop_id in the context
+    #     g.shop_id = get_shop_id_for_current_user()  # Implement this function based on your logic
+
+    #     # Initialize the scheduler with the shop_id
+    #     init_scheduler(app, g.shop_id)
+
 
     
      
@@ -40,14 +50,15 @@ def create_app(test_config=config):
     jwt=JWTManager(app)
     migrate= Migrate(app,db)
     db.init_app(app)
-    socketio.init_app(app)
-    init_scheduler(app)
+    # socketio.init_app(app)
+    # init_scheduler(app)
     
    
     # register blueprint
     
     app.register_blueprint(authentication_bp)
     app.register_blueprint(inventory_blueprint)
+    app.register_blueprint(transaction_bp)
 
 # jwt call back fucntions
     @jwt.token_in_blocklist_loader
