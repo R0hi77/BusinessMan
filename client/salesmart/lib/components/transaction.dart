@@ -98,35 +98,85 @@ class _TransactionTableState extends State<TransactionTable> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : () {
-              _fetchTransactions();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Refreshing data...')),
-              );
-            },
-            child: Text(_isLoading ? 'Updating...' : 'Refresh Data'),
-          ),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.all(8.0),
+        //   child: ElevatedButton(
+        //     style: const ButtonStyle(
+        //       backgroundColor: MaterialStatePropertyAll(Colors.green)
+        //     ),
+        //     onPressed: _isLoading ? null : () {
+        //       _fetchTransactions();
+        //       ScaffoldMessenger.of(context).showSnackBar(
+        //         const SnackBar(content: Text('Refreshing data...')),
+        //       );
+        //     },
+        //     child: Text(_isLoading ? 'Updating...' : 'Refresh Data',
+        //     style: const TextStyle(color: Colors.black),),
+        //   ),
+        // ),
         Expanded(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const  Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SingleChildScrollView(
                     child: DataTable(
-                      columns: [
-                       DataColumn(label: Text('ID')),
-                        DataColumn(label: Text('Date')),
-                        DataColumn(label: Text('Cash')),
-                        DataColumn(label: Text('Payment')),
-                        DataColumn(label: Text('Balance')),
-                        DataColumn(label: Text('Attendant')),
-                        DataColumn(label: Text('Product')),
-                        DataColumn(label: Text('Quantity')),
-                        DataColumn(label: Text('Price')),
+                      //
+                      headingRowColor: MaterialStateProperty.all(const Color.fromARGB(249, 159, 245, 205)),
+                      columns: const [
+                       DataColumn(label: Text('ID',
+                       style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ),)),
+
+                        DataColumn(label: Text('Date',
+                        style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ))),
+
+                        DataColumn(label: Text('Cash',
+                        style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ))),
+
+                        DataColumn(label: Text('Payment Method',
+                        style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ))),
+
+                        DataColumn(label: Text('Balance',
+                        style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ))),
+
+                        DataColumn(label: Text('Attendant Name',
+                        style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ))),
+
+
+                        DataColumn(label: Text('Product Name',
+                        style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ))),
+                        DataColumn(label: Text('Quantity',
+                        style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ))),
+
+                        DataColumn(label: Text('Price',
+                        style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20
+                       ))),
                       ],
                       rows: _transactions.map((transaction) {
                         return DataRow(cells: [

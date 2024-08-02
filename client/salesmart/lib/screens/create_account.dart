@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:salesmart/screens/login_as_manager.dart';
+//import 'package:salesmart/screens/login_as_manager.dart';
 import 'package:salesmart/components/dropdown.dart';
 import 'package:salesmart/screens/login_as_attendant.dart';
 

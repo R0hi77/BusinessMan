@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify,request
 from flask_jwt_extended import jwt_required,get_jwt
 from database.core import db
 from database.model import Shop, Transaction, TransactionItem
@@ -9,38 +9,58 @@ from sqlalchemy import func
 analytics=Blueprint("analytics",__name__,url_prefix='/api/analytics')
 
 
-@analytics.get('/dailysales/<date>')
+@analytics.post('/top_products')
 @jwt_required()
-def dailySales(date):
+def get_top_products():
+    data = request.json()
+    time_period = data.get('time_period')
     jwt=get_jwt()
-    shop_id=jwt.get('shop_id')
-    target_date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    shop_id = jwt.get('shop_id')
 
-    subquery = db.session.query(
+    if not shop_id:
+        return jsonify({'error': 'Shop ID is required.'}), 400
+
+    if time_period not in ['day', 'week', 'month', 'year']:
+        return jsonify({'error': 'Invalid time period. Choose day, week, month, or year.'}), 400
+
+    # Calculate the start date based on the time period
+    end_date = datetime.now()
+    if time_period == 'day':
+        start_date = end_date - timedelta(days=1)
+    elif time_period == 'week':
+        start_date = end_date - timedelta(weeks=1)
+    elif time_period == 'month':
+        start_date = end_date - timedelta(days=30)
+    else:  # year
+        start_date = end_date - timedelta(days=365)
+
+    # Query to get top 5 products for a specific shop
+    top_products = db.session.query(
         TransactionItem.product_name,
-        func.sum(TransactionItem.quantity * TransactionItem.price_per_item).label('total_sales')
-    ).join(Transaction).filter(
-        Transaction.shop_id == shop_id,
-        func.date(Transaction.transaction_date) == target_date.date()
-    ).group_by(TransactionItem.product_name).subquery()
+        func.sum(TransactionItem.quantity).label('total_quantity')
+    ).join(
+        Transaction, TransactionItem.transaction_id == Transaction.id
+    ).join(
+        Shop, Transaction.shop_id == Shop.id
+    ).filter(
+        Shop.id == shop_id,
+        Transaction.transaction_date.between(start_date, end_date)
+    ).group_by(
+        TransactionItem.product_name
+    ).order_by(
+        func.sum(TransactionItem.quantity).desc()
+    ).limit(10).all()
 
-    highest_selling_product_query = db.session.query(
-        subquery.c.name,
-        subquery.c.total_sales
-    ).order_by(subquery.c.total_sales.desc()).first()
-
-    if highest_selling_product_query:
-        result = {
-            'product_name': highest_selling_product_query.product_name,
-            'total_sales': highest_selling_product_query.total_sales
-        }
-    else:
-        result = {'message': 'No data found for the given shop and date'}
+    # Format the results
+    result = [
+        {'product_name': product.product_name, 'total_quantity': product.total_quantity}
+        for product in top_products
+    ]
 
     return jsonify(result)
 
 
-@analytics.get('/sales_daily', methods=['GET'])
+@analytics.get('/sales_daily')
 @jwt_required()
 def get_sales_trend():
     # Get the JWT token from the Authorization header

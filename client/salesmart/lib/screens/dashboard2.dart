@@ -3,6 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:salesmart/components/chartCard.dart';
 import 'package:salesmart/components/metricCard.dart';
 import 'dart:math';
+import 'package:salesmart/components/transaction.dart';
+import 'package:salesmart/screens/inventorypage.dart';
+import 'package:salesmart/screens/transactionspage.dart';
+import 'package:salesmart/screens/analytics.dart';
 
 class DashboardPage2 extends StatelessWidget {
   @override
@@ -91,21 +95,22 @@ class DashboardPage2 extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: const Icon(
-                Icons.dashboard,
-                size: 30,
-                color: Colors.black,
-              ),
-              title: const Text('Dashboard',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black)),
-              contentPadding: const EdgeInsets.fromLTRB(10, 10, 5, 10),
-              selectedColor: Colors.green,
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {},
-            ),
+                leading: const Icon(
+                  Icons.dashboard,
+                  size: 30,
+                  color: Colors.black,
+                ),
+                title: const Text('Dashboard',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black)),
+                contentPadding: const EdgeInsets.fromLTRB(10, 10, 5, 10),
+                selectedColor: Colors.green,
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.of(context).pop();
+                }),
             ListTile(
               leading: const Icon(
                 Icons.inventory,
@@ -122,7 +127,10 @@ class DashboardPage2 extends StatelessWidget {
               contentPadding: const EdgeInsets.fromLTRB(10, 10, 5, 10),
               selectedColor: Colors.green,
               trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => InventoryPage()));
+              },
             ),
             ListTile(
               leading: const Icon(
@@ -140,7 +148,10 @@ class DashboardPage2 extends StatelessWidget {
               contentPadding: const EdgeInsets.fromLTRB(10, 10, 5, 10),
               selectedColor: Colors.black,
               trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const TransactionsPage()));
+              },
             ),
             ListTile(
               leading: const Icon(
@@ -158,7 +169,10 @@ class DashboardPage2 extends StatelessWidget {
               contentPadding: const EdgeInsets.fromLTRB(10, 10, 5, 10),
               selectedColor: Colors.green,
               trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {},
+              onTap: () {
+                 Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => AnalyticsPage()));
+              },
             ),
             ListTile(
               leading: const Icon(
@@ -258,7 +272,7 @@ class DashboardPage2 extends StatelessWidget {
                     height: MediaQuery.sizeOf(context).height * 0.14,
                   ),
                   MetricCard(
-                    title: 'Number of transactions',
+                    title: 'Number of transactions today',
                     color: const Color.fromARGB(253, 200, 244, 249),
                     icon: const Icon(
                       Icons.arrow_upward,
@@ -281,6 +295,9 @@ class DashboardPage2 extends StatelessWidget {
                     width: MediaQuery.sizeOf(context).width * 0.18,
                     height: MediaQuery.sizeOf(context).height * 0.14,
                   ),
+
+                  
+                  
                 ],
               ),
               const SizedBox(height: 20),
@@ -352,8 +369,7 @@ class DashboardPage2 extends StatelessWidget {
                                 ],
                                 salesNumbers: const [4, 13, 9, 16, 9],
                                 max: [4, 13, 9].reduce(max).toDouble() + 10,
-                              )
-                              ),
+                              )),
                         ],
                       ),
                     ),
@@ -362,13 +378,20 @@ class DashboardPage2 extends StatelessWidget {
               ),
 
               // Client Activity
-             const Center(
-              heightFactor: 3,
-                child:  Text('Transactions preview', style: TextStyle(
-                  fontSize:30,
-                  fontWeight: FontWeight.bold
+              const Center(
+                heightFactor: 3,
+                child: Text(
+                  'Transactions preview',
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                    width: MediaQuery.sizeOf(context).width * 1,
+                    height: MediaQuery.sizeOf(context).height * 0.5,
+                    child: TransactionTable()),
               ),
 
               const SizedBox(height: 10),
