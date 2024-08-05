@@ -7,6 +7,7 @@ import 'package:salesmart/components/transaction.dart';
 import 'package:salesmart/screens/inventorypage.dart';
 import 'package:salesmart/screens/transactionspage.dart';
 import 'package:salesmart/screens/analytics.dart';
+import 'package:salesmart/screens/login_shop.dart';
 
 class DashboardPage2 extends StatelessWidget {
   @override
@@ -170,8 +171,8 @@ class DashboardPage2 extends StatelessWidget {
               selectedColor: Colors.green,
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => AnalyticsPage()));
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => AnalyticsPage()));
               },
             ),
             ListTile(
@@ -216,7 +217,10 @@ class DashboardPage2 extends StatelessWidget {
                     color: Colors.black),
               ),
               contentPadding: const EdgeInsets.fromLTRB(10, 10, 5, 10),
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const LoginShop()));
+              },
             ),
             ListTile(
               leading: const Icon(
@@ -295,9 +299,6 @@ class DashboardPage2 extends StatelessWidget {
                     width: MediaQuery.sizeOf(context).width * 0.18,
                     height: MediaQuery.sizeOf(context).height * 0.14,
                   ),
-
-                  
-                  
                 ],
               ),
               const SizedBox(height: 20),

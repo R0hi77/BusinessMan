@@ -5,6 +5,7 @@ import 'package:intl_phone_field/phone_number.dart';
 import 'package:http/http.dart' as http;
 import 'package:salesmart/components/circle.dart';
 import 'package:salesmart/screens/create_account.dart';
+import 'package:salesmart/screens/verify.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,7 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formGlobalKey = GlobalKey<FormState>();
   String _shop = '0';
   PhoneNumber _number = PhoneNumber(
-      countryISOCode: '+1', number: '1234567890', countryCode: '+233');
+      countryISOCode: '+1', number: '1234567890', countryCode: '233');
 
   void postData() async {
     var response = await http.post(
@@ -33,22 +34,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black,
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.black,
           ),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
         centerTitle: true,
-        title:  Column(
+        title: Column(
           children: [
             Text("SaleSmart",
-            style:GoogleFonts.archivoBlack(textStyle:const TextStyle(
-              fontSize: 30,
-              color: Colors.black
-            )
-            )
-            )
+                style: GoogleFonts.archivoBlack(
+                    textStyle:
+                        const TextStyle(fontSize: 30, color: Colors.black)))
           ],
         ),
         toolbarHeight: MediaQuery.sizeOf(context).height * 0.12,
@@ -57,16 +57,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(0),
                   bottomRight: Radius.circular(0)),
-                  color: Colors.green
-              ),
+              color: Colors.green),
         ),
       ),
       body: Container(
         // color: Color.fromARGB(255, 183, 228, 183),
         width: MediaQuery.sizeOf(context).width * 0.9,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(80.0, 80, 60, 0),
             child: Container(
@@ -126,6 +123,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onSaved: (value) {
                                 value = _number;
                               },
+                               onChanged: (phone) {
+                                      setState(() {
+                                       _number = phone;
+                                             });
+                                         },
                             ),
                           ),
                           // Shop Name Field
@@ -167,10 +169,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 //     true) {
                                 //   _formGlobalKey.currentState?.save();
                                 //   postData();
-                                  
+
                                 // }
                                 Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => const CreateAccountScreen()));
+                                    builder: (context) =>
+                                         VerificationPage(phoneNumber: _number.number.toString())));
                               },
                               child: const Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -197,13 +200,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           SizedBox(
             width: MediaQuery.sizeOf(context).width * 0.05,
           ),
-         
 
           Center(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-              
+            child: Stack(alignment: Alignment.center, children: [
               Center(
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -211,7 +210,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                           
                           Container(
                             height: 700,
                             width: 700,
@@ -225,7 +223,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ]),
               ),
-              CircleWidget( circle: Circle(radius: 300.0, color: Colors.green),),
+              CircleWidget(
+                circle: Circle(radius: 300.0, color: Colors.green),
+              ),
               //CircleWidget( circle: Circle(radius: 100.0, color: Colors.black),),
             ]),
           ),
