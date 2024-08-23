@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/phone_number.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:salesmart/components/circle.dart';
-import 'package:salesmart/screens/create_account.dart';
 import 'package:salesmart/screens/verify.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -16,16 +16,41 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formGlobalKey = GlobalKey<FormState>();
-  String _shop = '0';
-  PhoneNumber _number = PhoneNumber(
-      countryISOCode: '+1', number: '1234567890', countryCode: '233');
 
-  void postData() async {
-    var response = await http.post(
-        Uri.parse('http://localhost:5000/api/auth/register'),
-        body: {"shop_name": _shop, "number": _number.number});
+  String? shop;
+  PhoneNumber? number;
+  String? email;
+  String? businessAddress;
+  String? password;
+  String phoneString = '';
 
-    print(response.body);
+
+  Future<int> postData(PhoneNumber? number) async {
+    var url = Uri.parse('http://localhost:5000/api/auth/register');
+    var headers = {'Content-Type': 'application/json; charset=utf-8'};
+
+   
+    // Perform a null check before accessing properties
+    if (number != null) {
+      phoneString = number.number;
+    }
+
+    var payload = {
+      'shop_name': shop,
+      'email': email,
+      'password': password,
+      'number': phoneString,
+      'business_address': businessAddress
+    };
+
+    var response =
+        await http.post(url, headers: headers, body: jsonEncode(payload));
+
+    if (response.statusCode == 200) {
+      return 200;
+    } else {
+      return 400;
+    }
   }
 
   @override
@@ -65,9 +90,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         width: MediaQuery.sizeOf(context).width * 0.9,
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(80.0, 80, 60, 0),
+            padding: const EdgeInsets.fromLTRB(80.0, 0, 60, 0),
             child: Container(
-                height: MediaQuery.sizeOf(context).height * 0.68,
+                height: MediaQuery.sizeOf(context).height * 0.8,
                 width: MediaQuery.sizeOf(context).width * 0.3,
                 decoration: BoxDecoration(
                     color: Colors.white,
@@ -88,8 +113,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               color: Colors.black,
                               fontWeight: FontWeight.bold),
                         ),
+                        SizedBox(
+                          height: 10,
+                        ),
                         Text(
-                          "Enter shop mobile money number to receive OTP",
+                          "Verification OTP will be sent to shop mobile money number",
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Color.fromARGB(255, 128, 0, 128),
+                              fontWeight: FontWeight.bold),
+                        ),
+                        // SizedBox(height: 10,),
+                        Text(
+                          "Ensure it is a valid mobile money number",
                           style: TextStyle(
                               fontSize: 12,
                               color: Color.fromARGB(255, 128, 0, 128),
@@ -97,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: MediaQuery.sizeOf(context).height * 0.05),
+                    SizedBox(height: MediaQuery.sizeOf(context).height * 0.03),
                     // Form
                     Form(
                       key: _formGlobalKey,
@@ -121,13 +157,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 return null;
                               },
                               onSaved: (value) {
-                                value = _number;
+                                setState(() {
+                                  number = value;
+                                });
                               },
-                               onChanged: (phone) {
-                                      setState(() {
-                                       _number = phone;
-                                             });
-                                         },
                             ),
                           ),
                           // Shop Name Field
@@ -147,17 +180,98 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 return null;
                               },
                               onSaved: (value) {
-                                value = _shop;
+                                setState(() {
+                                  shop = value;
+                                });
                               },
                             ),
                           ),
+                          SizedBox(
+                            height: MediaQuery.sizeOf(context).height * 0.03,
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: TextFormField(
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                hintText: "Enter your password",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "You must enter a valid password";
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                setState(() {
+                                  password = value;
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: MediaQuery.sizeOf(context).height * 0.03,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                hintText: "Enter your shop's Email",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "You must enter a shop email";
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                setState(() {
+                                  email = value;
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: MediaQuery.sizeOf(context).height * 0.03,
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                hintText: "Business Address",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Field can not be empty";
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                setState(() {
+                                  businessAddress = value;
+                                });
+                              },
+                            ),
+                          ),
+
                           SizedBox(
                             height: MediaQuery.sizeOf(context).height * 0.06,
                           ),
                           // Submit Button
                           Container(
                             width: MediaQuery.sizeOf(context).width * 0.19,
-                            height: MediaQuery.sizeOf(context).height * 0.065,
+                            height: MediaQuery.sizeOf(context).height * 0.06,
                             decoration: const BoxDecoration(
                               borderRadius:
                                   BorderRadius.all(Radius.circular(50)),
@@ -165,15 +279,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             child: TextButton(
                               onPressed: () {
-                                // if (_formGlobalKey.currentState?.validate() ==
-                                //     true) {
-                                //   _formGlobalKey.currentState?.save();
-                                //   postData();
-
-                                // }
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) =>
-                                         VerificationPage(phoneNumber: _number.number.toString())));
+                                if (_formGlobalKey.currentState?.validate() ==
+                                    true) {
+                                  _formGlobalKey.currentState?.save();
+                                  postData(number);
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) => VerificationPage(
+                                        phoneNumber: phoneString
+                                        )));
+                                }
+                                
                               },
                               child: const Row(
                                   mainAxisAlignment: MainAxisAlignment.center,

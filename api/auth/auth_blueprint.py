@@ -23,7 +23,10 @@ def register():
        validation_data = ShopSchema(
            shopName=raw_data['shop_name'],
            number=raw_data['number'],
-           password=raw_data['password']
+           password=raw_data['password'],
+           email=raw_data['email'],
+           business_address=raw_data['business_address']
+
        )
             
     
@@ -38,9 +41,12 @@ def register():
         #temporarily push to the database
         shop=Shop(name=validation_data.shopName,
                   number=validation_data.number,
-                  password=generate_password_hash(validation_data.password))
+                  password=generate_password_hash(validation_data.password),
+                  email=validation_data.email,
+                  business_address=validation_data.business_address)
         db.session.add(shop)
         db.session.commit()
+        print(shop.number)
 
         # send otp
         otp=generate_otp()
@@ -76,25 +82,91 @@ confirm the OTP
 """
 @authentication_bp.post('/confirm')
 def confirm():
-        otp=request.get_json()
-        shop_number=session['shop_number']
-        otp_data=otp['otp']
-        
-        status=verify_otp(int(otp_data))
+    try:
+        # Get OTP from request
+        otp_data = request.get_json()
         print(otp_data)
-        print (status)
-        if status:
-            shop=Shop.query.filter_by(number=shop_number).first()
-            if shop:
-                shop.is_verified=True
-                db.session.commit()
-                return jsonify({'msg':'Shop account succesfully created'}),200
-            else:
-                return jsonify({'msg':'Shop number not found'})
-        else:
-            return jsonify({'msg':'Invalid OTP entered'}),400
+        if not otp_data:
+            return jsonify({'msg': 'OTP data is required'}), 400
+
+        number = otp_data.get('number')
+        otp = otp_data.get('otp')
+        
+        if not number or not otp:
+            return jsonify({'msg': 'Both number and OTP are required'}), 400
+        
+        print(number)
+        print(otp)
+
+        # Verify OTP
+        if not verify_otp(int(otp)):
+            return jsonify({'msg': 'Invalid OTP entered'}), 400
+
+        # Find shop in database
+        shop = Shop.query.filter_by(number=number).first()
+        if not shop:
+            return jsonify({'msg': 'Shop not found'}), 404
+
+        # Update shop verification status
+        try:
+            shop.is_verified = True
+            db.session.commit()
+        except Exception as db_err:
+            db.session.rollback()
+            print(f"Database error during shop verification: {str(db_err)}")
+            return jsonify({'msg': 'Failed to verify shop due to a database error'}), 500
+
+        # Send confirmation email
+        try:
+            mail_client = requests.Session()
+            url = 'http://localhost:3000/send-email'
+            headers = {"Content-Type": "application/json"}
+            payload = {"email": shop.email}
+            response = mail_client.post(url=url, headers=headers, json=payload)
+            response.raise_for_status()  # Raises an HTTPError for bad responses
+        except requests.exceptions.RequestException as e:
+            # Log the error, but don't return - we still want to confirm the account
+            print(f"Error sending confirmation email: {str(e)}")
+
+        return jsonify({'msg': 'Shop account successfully created and verified'}), 200
+
+    except Exception as e:
+        # Log the error for debugging (stack trace can be logged for more detail)
+        print(f"Unexpected error in confirm route: {str(e)}")
+        return jsonify({'msg': 'An unexpected error occurred'}), 500
 
 
+"""
+resend otp
+"""
+
+@authentication_bp.post('/resend')
+def resend_otp():
+        number=request.get_json('number')
+
+        otp=generate_otp()
+        client = requests.Session()
+        url = "https://sms.arkesel.com/sms/api"
+        params = {
+        "action": "send-sms",
+        "api_key": 'V1dSaWhlbWFsb3BVc0lISHZZc1A',
+        "to": number,
+        "from": "SaleSmart",
+        "sms": f"SaleSmart Business Manager OTP is {otp}"
+        }
+        try:
+            response = client.get(url, params=params)
+            response.raise_for_status()
+            response_data=response.json()
+            session['shop_number']=number
+
+            return jsonify ({'msg':"successfully sent",
+                             "otp":otp,
+                             'response':response_data
+                             }),200
+            
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": "Error occurred while sending OTP", "details": str(e)}), 500
 
 
 
@@ -140,9 +212,11 @@ create manager account
 
 """
 @authentication_bp.post('/createmanager')
+@jwt_required()
 def set_manager_password():
     data=request.get_json()
-    shop_id=session['shop_id']
+    jwt=get_jwt()
+    shop_id=jwt('jwt')
     manager=Manager(name=data['username'],
         password=generate_password_hash(data['password']),
                     shop_id=shop_id)

@@ -1,11 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:salesmart/screens/login_as_manager.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl_phone_field/intl_phone_field.dart';
-import 'package:salesmart/screens/loginas.dart';
+import 'package:salesmart/screens/create_account.dart';
+import 'dart:convert';
 
-class LoginShop extends StatelessWidget {
-  const LoginShop({super.key});
+class LoginShop extends StatefulWidget {
+  const LoginShop({Key? key}) : super(key: key);
+
+  @override
+  _LoginShopState createState() => _LoginShopState();
+}
+
+class _LoginShopState extends State<LoginShop> {
+  final _formGlobalKey = GlobalKey<FormState>();
+
+  String password = '';
+  String phone_number = '';
+
+  Future<Map<String, dynamic>> postData() async {
+    var url = Uri.parse('http://localhost:5000/api/auth/loginasshop');
+    var headers = {'Content-Type': 'application/json; charset=utf-8'};
+
+    var body = {
+      'number': phone_number,
+      'password': password,
+    };
+
+    try {
+      var response = await http.post(url, headers: headers, body: jsonEncode(body));
+
+      if (response.statusCode == 200) {
+        var responseData = jsonDecode(response.body);
+        return {'status': 200, 'token': responseData['token'] ?? ''};
+      } else {
+        return {'status': 400, 'token': ''};
+      }
+    } catch (e) {
+      print('Error: $e');
+      return {'status': 500, 'token': ''};
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +61,7 @@ class LoginShop extends StatelessWidget {
                         const TextStyle(fontSize: 30, color: Colors.black)))
           ],
         ),
-        toolbarHeight: MediaQuery.sizeOf(context).height * 0.12,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.12,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.only(
@@ -41,8 +76,8 @@ class LoginShop extends StatelessWidget {
         children: [
           Center(
             child: Container(
-                height: MediaQuery.sizeOf(context).height * 0.65,
-                width: MediaQuery.sizeOf(context).width * 0.25,
+                height: MediaQuery.of(context).size.height * 0.65,
+                width: MediaQuery.of(context).size.width * 0.25,
                 decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.all(Radius.circular(30))),
@@ -60,13 +95,12 @@ class LoginShop extends StatelessWidget {
                         fontWeight: FontWeight.bold),
                   ),
                   Form(
+                    key: _formGlobalKey,
                     child: Column(
                       children: [
                         const SizedBox(
                           height: 80,
                         ),
-                        // username
-
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: IntlPhoneField(
@@ -77,13 +111,11 @@ class LoginShop extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            validator: (value) {
-                              if (value == null) {
-                                return "Enter a valid mobile number";
-                              }
-                              return null;
+                            onChanged: (phone) {
+                              setState(() {
+                                phone_number = phone.completeNumber;
+                              });
                             },
-                            onSaved: (value) {},
                           ),
                         ),
                         const SizedBox(
@@ -93,6 +125,7 @@ class LoginShop extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: TextFormField(
+                            obscureText: true,
                             decoration: InputDecoration(
                               hintText: "password",
                               border: OutlineInputBorder(
@@ -105,26 +138,39 @@ class LoginShop extends StatelessWidget {
                               }
                               return null;
                             },
-                            onSaved: (value) {},
+                            onChanged: (value) {
+                              setState(() {
+                                password = value;
+                              });
+                            },
                           ),
                         ),
 
                         SizedBox(
-                          height: MediaQuery.sizeOf(context).height * 0.1,
+                          height: MediaQuery.of(context).size.height * 0.1,
                         ),
-                        // Submit Button
                         Container(
-                          width: MediaQuery.sizeOf(context).width * 0.2,
-                          height: MediaQuery.sizeOf(context).height * 0.065,
+                          width: MediaQuery.of(context).size.width * 0.2,
+                          height: MediaQuery.of(context).size.height * 0.065,
                           decoration: const BoxDecoration(
                             borderRadius: BorderRadius.all(Radius.circular(50)),
                             color: Colors.green,
                           ),
                           child: TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) =>
-                                      const LogInAsPage()));
+                              if (_formGlobalKey.currentState?.validate() == true) {
+                                postData().then((result) {
+                                  if (result['status'] == 200 && result['token'] != null && result['token'].isNotEmpty) {
+                                    Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) => CreateAccountScreen(token: result['token'] as String),
+                                    ));
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Login failed. Check your credentials and try again')),
+                                    );
+                                  }
+                                });
+                              }
                             },
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -150,22 +196,4 @@ class LoginShop extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget _buildTextField({required String hint, bool obscureText = false}) {
-  return TextField(
-    obscureText: obscureText,
-    textAlign: TextAlign.center,
-    decoration: InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: Colors.black45),
-      filled: true,
-      fillColor: Colors.black12,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(40),
-        borderSide: BorderSide.none,
-      ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 20),
-    ),
-  );
 }

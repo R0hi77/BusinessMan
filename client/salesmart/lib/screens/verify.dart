@@ -41,43 +41,96 @@ class _VerificationPageState extends State<VerificationPage> {
     });
   }
 
-  Future<void> verifyOTP() async {
+Future<void> verifyOTP() async {
+  try {
+    // Prepare the request body
+    final body = {
+      'otp': _enteredOTP,
+      'number': widget.phoneNumber?.toString() ?? '',
+    };
+
+    // Log the request body for debugging
+    print('Request body: $body');
+
+    // Send the POST request
     final response = await http.post(
-      Uri.parse('YOUR_API_ENDPOINT_HERE'),
-      body: json.encode({'otp': _enteredOTP}),
+      Uri.parse('http://localhost:5000/api/auth/confirm'),
+      body: json.encode(body),
       headers: {'Content-Type': 'application/json'},
     );
 
+    // Log the response for debugging
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
     if (response.statusCode == 200) {
+      // Parse the response
+      final jsonResponse = json.decode(response.body);
+      
+      // Show success dialog
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return SuccessDialog(
-            description: 'This is the description of the awesome dialog box',
+            description: jsonResponse['message'] ?? 'OTP verified successfully',
             onOkPressed: () {
               Navigator.of(context).pop(); // Close the dialog
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const LoginShop()),
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) =>  LoginShop()),
               );
             },
           );
         },
       );
-    } else {
+    } else if (response.statusCode == 400) {
+      // Handle bad request
+      final jsonResponse = json.decode(response.body);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid OTP. Please try again.')),
+        SnackBar(content: Text(jsonResponse['error'] ?? 'Invalid OTP or phone number')),
+      );
+    } else {
+      // Handle other status codes
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unexpected error. Status code: ${response.statusCode}')),
       );
     }
+  } catch (e) {
+    // Handle network errors or other exceptions
+    print('Error in verifyOTP: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Network error: ${e.toString()}')),
+    );
   }
+}
 
-  void resendOTP() {
-    // Implement your resend OTP logic here
+
+  void resendOTP() async {
+  // Make the API call to resend the OTP
+  final response = await http.post(
+    Uri.parse('http://localhost:5000/api/auth/resend'), // Replace with your API endpoint
+    headers: <String,String>{
+      'Content-Type': 'application/json',
+    },
+    body: {"number": widget.phoneNumber}, // Replace with your request body
+  );
+
+  // Check if the API call was successful
+  if (response.statusCode == 200) {
+    // Process the response if needed
+
+    // Update the UI
     setState(() {
       _counter = 300;
       _isResendEnabled = false;
     });
+
     startTimer();
+  } else {
+    // Handle errors here
+    print('Failed to resend OTP: ${response.body}');
   }
+}
+
 
   @override
   void dispose() {
@@ -153,10 +206,11 @@ class _VerificationPageState extends State<VerificationPage> {
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 40),
                 child: const Text(
-                  "Enter the code sent to your number",
+                  "Enter the OTP sent to your shop mobile money number",
                   style: TextStyle(
-                    color: Colors.grey,
+                    color: Colors.purple,
                     fontSize: 18,
+                    fontWeight: FontWeight.bold
                   ),
                 ),
               ),
@@ -185,7 +239,7 @@ class _VerificationPageState extends State<VerificationPage> {
                 ),
               ),
               Pinput(
-                length: 5,
+                length: 6,
                 defaultPinTheme: defaultPinTheme,
                 focusedPinTheme: defaultPinTheme.copyWith(
                   decoration: defaultPinTheme.decoration!.copyWith(

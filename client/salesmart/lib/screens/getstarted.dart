@@ -26,7 +26,7 @@ class _StartState extends State<Start> {
                 height:MediaQuery.sizeOf(context).height*0.5,
                 width: MediaQuery.sizeOf(context).width*0.5,
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color:  Colors.white,
                   image:  DecorationImage(image: AssetImage('/home/petersburg/Desktop/BusinessManager/client/salesmart/assets/images/isometric-financial-robo-assistant-helping-a-man.png')
                   ,scale: 0.3),
                   borderRadius: BorderRadius.vertical(

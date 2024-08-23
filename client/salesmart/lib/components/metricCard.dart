@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+
 class MetricCard extends StatelessWidget {
   final String title;
   final Icon icon;
@@ -9,15 +10,15 @@ class MetricCard extends StatelessWidget {
   final double height;
   final Color color;
 
-  MetricCard({
-    Key? key,
-    required this.icon,
-    required this.title,
-    required this.value,
-    this.width = 200,
-    this.height = 140,
-    required this.color
-  }) : super(key: key);
+  MetricCard(
+      {Key? key,
+      required this.icon,
+      required this.title,
+      required this.value,
+      this.width = 200,
+      this.height = 140,
+      required this.color})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

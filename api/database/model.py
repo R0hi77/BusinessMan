@@ -12,6 +12,8 @@ class Shop(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(255), unique=True, nullable=False)
     number = db.Column(db.String(255), unique=True, nullable=False)
+    email= db.Column(db.String(255),unique=True,nullable=False)
+    business_address = db.Column(db.String(255),unique=False,nullable=False)
     password = db.Column(db.String, nullable=True)
     is_verified = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.now())
