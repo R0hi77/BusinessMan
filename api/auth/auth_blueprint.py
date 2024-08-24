@@ -177,6 +177,8 @@ Shop account login
 @authentication_bp.post('/loginasshop')
 def login():
     raw_data = request.get_json()
+    # print(raw_data['password'])
+    # print(raw_data['number'])
     try:
         validation_data = Login(
             number=raw_data['number'],
@@ -184,27 +186,31 @@ def login():
         )
     except ValidationError as e:
         return jsonify({'msg': str(e)}), 400
-
-    shop = Shop.query.filter_by(number=validation_data.number).first()
+    num=validation_data.number
+    print(f'this is validation {num}')
+    shop = db.session.query(Shop).filter_by(number=num).first()
+    
     if shop and check_password_hash(shop.password, validation_data.password):
-        session['shop_id']=shop.id
+        session['shop_id'] = shop.id
+        claims = {
+            "shop_name": shop.name,
+            "shop_id": shop.id
+        }
+        try:
+            access_token = create_access_token(identity='shop', additional_claims=claims)
+            refresh_token = create_refresh_token(identity='shop', additional_claims=claims)
+        except Exception as e:
+            return jsonify({'msg': 'Token generation failed', 'error': str(e)}), 500
 
-        claims={"shop_name":shop.name,
-                "shop_id":shop.id}
-        access_token = create_access_token(identity='shop',
-                                           additional_claims=claims)
-        refresh_token = create_refresh_token(identity='shop',
-                                             additional_claims=claims)
         return jsonify({
-            'shop  id':shop.id,
+            'shop_id': shop.id,  # Corrected key name
             'shop_name': shop.name,
-            'number':shop.number,
+            'number': shop.number,
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 200
-    
     else:
-        return jsonify({'msg': 'Invalid log in credentials'}), 401
+        return jsonify({'msg': 'Invalid login credentials'}), 401
 
 
 """
@@ -216,10 +222,15 @@ create manager account
 def set_manager_password():
     data=request.get_json()
     jwt=get_jwt()
-    shop_id=jwt('jwt')
-    manager=Manager(name=data['username'],
+    shop_id=jwt['shop_id']
+
+    shop_id = uuid.UUID(shop_id)
+
+    manager = Manager(
+        name=data['username'],
         password=generate_password_hash(data['password']),
-                    shop_id=shop_id)
+        shop_id=shop_id
+    )
     
     db.session.add(manager)
     db.session.commit()
@@ -229,7 +240,7 @@ def set_manager_password():
             "id":manager.id,
             "username":manager.name,
         }
-    )
+    ),200
 
 
 

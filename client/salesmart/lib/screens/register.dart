@@ -32,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
    
     // Perform a null check before accessing properties
     if (number != null) {
-      phoneString = number.number;
+      phoneString =number.countryCode+number.number;
     }
 
     var payload = {

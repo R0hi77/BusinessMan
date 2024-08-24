@@ -33,7 +33,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 
   Future<int> postData() async {
-    var url = Uri.parse('http://localhost:5000/auth/createmanager');
+    var url = Uri.parse('http://localhost:5000/api/auth/createmanager');
     var body = {
       'username': username,
       'password': password,
@@ -45,7 +45,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       'Content-Type': 'application/json; charset=utf-8',
       'Authorization': 'Bearer ${widget.token}',
     };
-    var response = await http.post(url, body: jsonEncode(body), headers: headers);
+    var response =
+        await http.post(url, body: jsonEncode(body), headers: headers);
     return response.statusCode;
   }
 
@@ -183,6 +184,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       onPressed: () async {
                         if (_formKey.currentState?.validate() == true) {
                           _formKey.currentState?.save();
+                          print(shopId);
                           try {
                             int statusCode = await postData();
                             if (statusCode == 200) {
@@ -191,12 +193,16 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                               ));
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Failed to create account. Please try again.')),
+                                const SnackBar(
+                                    content: Text(
+                                        'Failed to create account. Please try again.')),
                               );
                             }
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('An error occurred. Please try again later.')),
+                              const SnackBar(
+                                  content: Text(
+                                      'An error occurred. Please try again later.')),
                             );
                           }
                         }

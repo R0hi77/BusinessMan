@@ -19,28 +19,26 @@ class _LoginShopState extends State<LoginShop> {
   String phone_number = '';
 
   Future<Map<String, dynamic>> postData() async {
-    var url = Uri.parse('http://localhost:5000/api/auth/loginasshop');
-    var headers = {'Content-Type': 'application/json; charset=utf-8'};
-
-    var body = {
+  final response = await http.post(
+    Uri.parse('http://localhost:5000/api/auth/loginasshop'),
+    headers: {'Content-Type': 'application/json; charset=utf-8'},
+    body: jsonEncode({
       'number': phone_number,
       'password': password,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    var responseData = jsonDecode(response.body);
+    return {
+      'status': 200,
+      'access_token': responseData['access_token'] ?? '',
     };
-
-    try {
-      var response = await http.post(url, headers: headers, body: jsonEncode(body));
-
-      if (response.statusCode == 200) {
-        var responseData = jsonDecode(response.body);
-        return {'status': 200, 'token': responseData['token'] ?? ''};
-      } else {
-        return {'status': 400, 'token': ''};
-      }
-    } catch (e) {
-      print('Error: $e');
-      return {'status': 500, 'token': ''};
-    }
+  } else {
+    return {'status': response.statusCode, 'access_token': ''};
   }
+}
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +119,6 @@ class _LoginShopState extends State<LoginShop> {
                         const SizedBox(
                           height: 30,
                         ),
-
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: TextFormField(
@@ -145,7 +142,6 @@ class _LoginShopState extends State<LoginShop> {
                             },
                           ),
                         ),
-
                         SizedBox(
                           height: MediaQuery.of(context).size.height * 0.1,
                         ),
@@ -158,20 +154,28 @@ class _LoginShopState extends State<LoginShop> {
                           ),
                           child: TextButton(
                             onPressed: () {
-                              if (_formGlobalKey.currentState?.validate() == true) {
-                                postData().then((result) {
-                                  if (result['status'] == 200 && result['token'] != null && result['token'].isNotEmpty) {
-                                    Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (context) => CreateAccountScreen(token: result['token'] as String),
-                                    ));
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Login failed. Check your credentials and try again')),
-                                    );
-                                  }
-                                });
+                    if (_formGlobalKey.currentState?.validate() == true) {
+                            postData().then((result) {
+                              if (result['status'] == 200 && result['access_token'].isNotEmpty) {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => CreateAccountScreen(
+                                    token: result['access_token'],
+                                  ),
+                                ));
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Login failed. Please check your credentials and try again.'),
+                                  ),
+                                );
                               }
-                            },
+                            }).catchError((error) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('An error occurred: $error')),
+                              );
+                            });
+                          }
+                        },
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [

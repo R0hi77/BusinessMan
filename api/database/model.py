@@ -27,8 +27,8 @@ class Manager(db.Model):
     __tablename__ = 'managers'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name=db.Column(db.String(),nullable=False)
-    password = db.Column(db.String, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    password= db.Column(db.String(100), nullable=False)
     shop_id = db.Column(UUID(as_uuid=True), db.ForeignKey('shops.id'), nullable=False)
 
     shop = db.relationship('Shop', back_populates='managers')

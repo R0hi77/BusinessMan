@@ -121,9 +121,7 @@ class LoginScreen extends StatelessWidget {
                             const SizedBox(width: 10),
                             InkWell(
                               onTap: () {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CreateAccountScreen()));
+                                
                               },
                               child: const Text(
                                 "Create one",
