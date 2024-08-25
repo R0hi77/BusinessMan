@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:salesmart/components/transaction.dart';
+import 'package:salesmart/services/account_balance.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
@@ -10,7 +11,28 @@ class TransactionsPage extends StatefulWidget {
 }
 
 class _TransactionsPageState extends State<TransactionsPage> {
+  String _balance = '....';
   @override
+  void initState() {
+    super.initState();
+    _fetchBalance();
+  }
+
+  Future<void> _fetchBalance() async {
+    try {
+      final balanceData = await PaystackService.fetchBalance();
+      setState(() {
+        // Extract only the balance from the returned data
+        _balance = balanceData['balance'].toString();
+      });
+    } catch (e) {
+      print('Error fetching balance: $e');
+      setState(() {
+        _balance = 'Error';
+      });
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -73,7 +95,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'GH₵.....',
+                            'GH₵$_balance',
                             style: GoogleFonts.archivo(
                                 fontWeight: FontWeight.bold, fontSize: 18),
                           ),
@@ -90,29 +112,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 )
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Card(
-                elevation: 2,
-                child: Container(
-                  alignment: Alignment.center,
-                  height: MediaQuery.sizeOf(context).height * 0.4,
-                  width: MediaQuery.sizeOf(context).width * 0.9,
-                  decoration: const BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
-                  child: const SingleChildScrollView(
-                      //child: SalesBarChart(),
-                      ),
-                ),
-              ),
-            ),
             SizedBox(
               width: MediaQuery.sizeOf(context).width * 0.9,
               height: MediaQuery.sizeOf(context).width * 1,
               child: TransactionTable(),
             )
-            
           ],
         ),
       ),

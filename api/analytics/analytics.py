@@ -174,3 +174,54 @@ def get_monthly_sales_trend():
     ]
 
     return jsonify(data_points)
+
+@analytics.get('/daily_summary')
+@jwt_required()
+def daily_summary():
+    # Get the JWT token from the Authorization header
+    jwt = get_jwt()
+    shop_id = jwt.get('shop_id')
+
+    if not shop_id:
+        return jsonify({"error": "Invalid or missing token"}), 401
+
+    # Get today's date (start and end of the day)
+    today_start = datetime.combine(datetime.today(), datetime.min.time())
+    today_end = datetime.combine(datetime.today(), datetime.max.time())
+
+    # Query to get total transaction value for the day
+    total_transaction_value = db.session.query(
+        func.sum(Transaction.cash_in)
+    ).filter(
+        Transaction.shop_id == shop_id,
+        Transaction.transaction_date >= today_start,
+        Transaction.transaction_date <= today_end
+    ).scalar() or 0.0
+
+    # Query to get the number of transactions for the day
+    number_of_transactions = db.session.query(
+        func.count(Transaction.id)
+    ).filter(
+        Transaction.shop_id == shop_id,
+        Transaction.transaction_date >= today_start,
+        Transaction.transaction_date <= today_end
+    ).scalar() or 0
+
+    # Query to get total profits made in a day
+    total_profits = db.session.query(
+        func.sum((TransactionItem.price_per_item * TransactionItem.quantity) - TransactionItem.price_per_item)
+    ).join(Transaction).filter(
+        Transaction.shop_id == shop_id,
+        Transaction.transaction_date >= today_start,
+        Transaction.transaction_date <= today_end
+    ).scalar() or 0.0
+
+    # Prepare and return the summary
+    summary = {
+        "total_transaction_value": total_transaction_value,
+        "number_of_transactions": number_of_transactions,
+        "total_profits": total_profits
+    }
+
+    return jsonify(summary), 200
+

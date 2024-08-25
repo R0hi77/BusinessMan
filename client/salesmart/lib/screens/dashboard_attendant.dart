@@ -10,6 +10,7 @@ import 'package:salesmart/screens/login_shop.dart';
 import 'package:salesmart/services/top_products.dart'; // Import the ApiService
 import 'package:salesmart/services/sales_trends.dart';
 import 'package:salesmart/services/attendant_details.dart';
+import 'package:salesmart/services/sales_summaries.dart';
 
 class DashboardPageAttendant extends StatefulWidget {
   @override
@@ -20,6 +21,9 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
   late Future<Map<String, dynamic>> topProductsData;
   late Future<Map<String, dynamic>> salesTrendData;
   late String attendant_name;
+  late String profit;
+  late String number_of_transactions;
+  late String transactions;
 
   @override
   void initState() {
@@ -45,7 +49,7 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
 
       if (details.containsKey('shopName')) {
         attendant_name = details['name'];
-        
+
         // Update your UI or perform further actions
       } else if (details.containsKey('msg')) {
         print('Error: ${details['msg']}');
@@ -53,6 +57,23 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
       }
     } catch (e) {
       print('An error occurred: $e');
+    }
+  }
+
+  void getDailySummary(String token) async {
+    final Map<String, dynamic> summary =
+        await ApiSummaryService.fetchDailySummary(token);
+
+    if (summary.containsKey('error')) {
+      print('Error: ${summary['error']}');
+      if (summary.containsKey('details')) {
+        print('Details: ${summary['details']}');
+      }
+    } else {
+      transactions = summary['totalTransactionValue'];
+      number_of_transactions = summary['number_of_transactions'];
+      profit = summary['total_profits'];
+      // Update your UI or perform further actions
     }
   }
 
@@ -172,7 +193,7 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
                   borderRadius: BorderRadius.circular(20), color: Colors.black),
             ),
             const SizedBox(width: 15),
-             Column(
+            Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
@@ -215,7 +236,7 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
         MetricCard(
           color: const Color.fromARGB(249, 159, 245, 205),
           title: 'Today\'s transactions',
-          value: '₵ 200.87',
+          value: '₵ $transactions',
           icon: const Icon(Icons.wallet, size: 20, color: Colors.blue),
           width: MediaQuery.of(context).size.width * 0.18,
           height: MediaQuery.of(context).size.height * 0.14,
@@ -225,7 +246,7 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
           color: const Color.fromARGB(255, 243, 249, 121),
           icon: const Icon(Icons.monetization_on_rounded,
               size: 20, color: Colors.blue),
-          value: '₵ 26.17',
+          value: '₵ $profit',
           width: MediaQuery.of(context).size.width * 0.18,
           height: MediaQuery.of(context).size.height * 0.14,
         ),
@@ -233,7 +254,7 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
           title: 'Number of transactions today',
           color: const Color.fromARGB(253, 200, 244, 249),
           icon: const Icon(Icons.arrow_upward, size: 20, color: Colors.blue),
-          value: '28',
+          value: number_of_transactions,
           width: MediaQuery.of(context).size.width * 0.18,
           height: MediaQuery.of(context).size.height * 0.14,
         ),
@@ -241,7 +262,7 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
           color: const Color.fromARGB(251, 250, 206, 210),
           title: 'Today\'s transactions',
           icon: const Icon(Icons.wallet, size: 20, color: Colors.blue),
-          value: '₵ 200.87',
+          value: '₵ $transactions',
           width: MediaQuery.of(context).size.width * 0.18,
           height: MediaQuery.of(context).size.height * 0.14,
         ),

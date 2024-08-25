@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Transaction {
-  final String id;  // Changed from int to String for UUID
+  final String id;
   final String transactionDate;
   final double cash;
   final String paymentMethod;
@@ -29,7 +30,7 @@ class Transaction {
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return Transaction(
-      id: json['id'],  // Now expecting a String UUID
+      id: json['id'],
       transactionDate: json['transaction_date'],
       cash: json['cash'].toDouble(),
       paymentMethod: json['payment_method'],
@@ -64,10 +65,14 @@ class _TransactionTableState extends State<TransactionTable> {
     });
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token') ?? '';
+
       final response = await http.get(
-        Uri.parse('YOUR_API_ENDPOINT_URL'),
+        Uri.parse('YOUR_API_BASE_URL/transactions'),
         headers: {
-          'Authorization': 'Bearer YOUR_JWT_TOKEN',
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
       );
 
@@ -98,97 +103,36 @@ class _TransactionTableState extends State<TransactionTable> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Padding(
-        //   padding: const EdgeInsets.all(8.0),
-        //   child: ElevatedButton(
-        //     style: const ButtonStyle(
-        //       backgroundColor: MaterialStatePropertyAll(Colors.green)
-        //     ),
-        //     onPressed: _isLoading ? null : () {
-        //       _fetchTransactions();
-        //       ScaffoldMessenger.of(context).showSnackBar(
-        //         const SnackBar(content: Text('Refreshing data...')),
-        //       );
-        //     },
-        //     child: Text(_isLoading ? 'Updating...' : 'Refresh Data',
-        //     style: const TextStyle(color: Colors.black),),
-        //   ),
-        // ),
         Expanded(
           child: _isLoading
-              ? const  Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SingleChildScrollView(
                     child: DataTable(
-                      //
                       headingRowColor: MaterialStateProperty.all(const Color.fromARGB(249, 159, 245, 205)),
                       columns: const [
-                       DataColumn(label: Text('ID',
-                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ),)),
-
-                        DataColumn(label: Text('Date',
-                        style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ))),
-
-                        DataColumn(label: Text('Cash',
-                        style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ))),
-
-                        DataColumn(label: Text('Payment Method',
-                        style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ))),
-
-                        DataColumn(label: Text('Balance',
-                        style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ))),
-
-                        DataColumn(label: Text('Attendant Name',
-                        style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ))),
-
-
-                        DataColumn(label: Text('Product Name',
-                        style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ))),
-                        DataColumn(label: Text('Quantity',
-                        style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ))),
-
-                        DataColumn(label: Text('Price',
-                        style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20
-                       ))),
+                        DataColumn(label: Text('ID', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
+                        DataColumn(label: Text('Date', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
+                        DataColumn(label: Text('Cash', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
+                        DataColumn(label: Text('Payment Method', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
+                        DataColumn(label: Text('Balance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
+                        DataColumn(label: Text('Attendant Name', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
+                        DataColumn(label: Text('Product Name', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
+                        DataColumn(label: Text('Quantity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
+                        DataColumn(label: Text('Price', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
                       ],
                       rows: _transactions.map((transaction) {
                         return DataRow(cells: [
-                          DataCell(Text(transaction.id)),  // Now displaying UUID as a string
+                          DataCell(Text(transaction.id)),
                           DataCell(Text(transaction.transactionDate)),
-                          DataCell(Text('\$${transaction.cash.toStringAsFixed(2)}')),
+                          DataCell(Text('GH₵${transaction.cash.toStringAsFixed(2)}')),
                           DataCell(Text(transaction.paymentMethod)),
-                          DataCell(Text('\$${transaction.balance.toStringAsFixed(2)}')),
+                          DataCell(Text('GH₵${transaction.balance.toStringAsFixed(2)}')),
                           DataCell(Text(transaction.attendant)),
                           DataCell(Text(transaction.product)),
                           DataCell(Text(transaction.quantity.toString())),
-                          DataCell(Text('\$${transaction.price.toStringAsFixed(2)}')),
+                          DataCell(Text('GH₵${transaction.price.toStringAsFixed(2)}')),
                         ]);
                       }).toList(),
                     ),
