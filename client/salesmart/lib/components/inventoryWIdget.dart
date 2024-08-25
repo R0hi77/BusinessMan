@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:salesmart/services/inventoryService.dart';
+import 'package:salesmart/models/inventoryCategory.dart';
 
 class InventoryTable extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onItemsSelected;
@@ -46,9 +47,9 @@ class _InventoryTableState extends State<InventoryTable> {
       final newItem = {
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
         'name': '',
-        'category': '',
-        'price': '',
-        'quantity': '',
+        'category': ItemCategory.others, // Use the enum here
+        'price': 0.0, // Initialized as a double
+        'quantity': 0, // Initialized as an int
         'expiryDate': '',
         'supplier': '',
         'barcode': '',
@@ -61,24 +62,30 @@ class _InventoryTableState extends State<InventoryTable> {
   void _editItem(Map<String, dynamic> item) {
     setState(() {
       editingItem = Map.from(item);
+      // Convert string category to ItemCategory if necessary
+      if (editingItem!['category'] is String) {
+        editingItem!['category'] =
+            ItemCategoryExtension.fromString(editingItem!['category']);
+      }
     });
   }
 
   void _saveItem() async {
     if (editingItem != null) {
-      final index = inventoryItems.indexWhere((item) => item['id'] == editingItem!['id']);
+      final index =
+          inventoryItems.indexWhere((item) => item['id'] == editingItem!['id']);
       if (index != -1) {
         setState(() {
           inventoryItems[index] = editingItem!;
         });
         // Save to backend
-        await _inventoryService.updateInventoryItem(editingItem!,'');
+        await _inventoryService.updateInventoryItem(editingItem!, '');
       } else {
         setState(() {
           inventoryItems.add(editingItem!);
         });
         // Save to backend
-        await _inventoryService.addInventoryItem(editingItem!,'');
+        await _inventoryService.addInventoryItem(editingItem!, '');
       }
       setState(() {
         editingItem = null;
@@ -92,24 +99,35 @@ class _InventoryTableState extends State<InventoryTable> {
       selectedItems.remove(item);
     });
     // Delete from backend
-    await _inventoryService.deleteInventoryItem(item['id'],'');
+    await _inventoryService.deleteInventoryItem(item['id'], '');
     widget.onItemsSelected(selectedItems);
   }
 
- DataCell _buildEditableCell(String key, String label) {
+  DataCell _buildEditableCell(Map<String, dynamic> item, String key) {
     return DataCell(
-      editingItem != null && editingItem!['id'] == key
+      editingItem != null && editingItem!['id'] == item['id']
           ? TextFormField(
               initialValue: editingItem![key]?.toString() ?? '',
               onChanged: (value) {
-                editingItem![key] = value;
+                setState(() {
+                  // Convert input value based on the key
+                  if (key == 'quantity') {
+                    editingItem![key] = int.tryParse(value) ?? 0;
+                  } else if (key == 'price') {
+                    editingItem![key] = double.tryParse(value) ?? 0.0;
+                  } else if (key == 'category') {
+                    editingItem![key] = ItemCategoryExtension.fromString(value);
+                  } else {
+                    editingItem![key] = value;
+                  }
+                });
               },
             )
-          : Text(label),
-      showEditIcon: true,
+          : Text(item[key]?.toString() ?? ''),
+      showEditIcon: editingItem == null || editingItem!['id'] != item['id'],
       onTap: () {
         if (editingItem == null) {
-          _editItem(inventoryItems.firstWhere((item) => item['id'] == key));
+          _editItem(item);
         }
       },
     );
@@ -122,32 +140,27 @@ class _InventoryTableState extends State<InventoryTable> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           InkWell(
             onTap: _addNewItem,
             child: Container(
               width: 200,
               height: 50,
-             decoration: const BoxDecoration(
-              color: Colors.green,
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-             ),
-             child: const Center(
-               child: Text("Add New Item",
-               style: TextStyle(
-                fontSize: 20,
-                color: Colors.black,
-                fontWeight: FontWeight.bold
-               ),),
-             ), 
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+              child: const Center(
+                child: Text(
+                  "Add New Item",
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ),
-
-          // ElevatedButton(
-          //   onPressed: _addNewItem,
-          //   child: Text('Add New Item'),
-          // ),
-          
           DataTable(
             columns: const [
               DataColumn(label: Text('Name')),
@@ -161,16 +174,17 @@ class _InventoryTableState extends State<InventoryTable> {
             ],
             rows: inventoryItems.map((item) {
               final isSelected = selectedItems.contains(item);
-              final isEditing = editingItem != null && editingItem!['id'] == item['id'];
+              final isEditing =
+                  editingItem != null && editingItem!['id'] == item['id'];
               return DataRow(
                 cells: [
-                  _buildEditableCell('name', item['name'] ?? ''),
-                  _buildEditableCell('category', item['category'] ?? ''),
-                  _buildEditableCell('price', 'GH₵${item['price'] ?? ''}'),
-                  _buildEditableCell('quantity', item['quantity']?.toString() ?? ''),
-                  _buildEditableCell('expiryDate', item['expiryDate'] ?? ''),
-                  _buildEditableCell('supplier', item['supplier'] ?? ''),
-                  _buildEditableCell('barcode', item['barcode'] ?? ''),
+                  _buildEditableCell(item, 'name'),
+                  _buildEditableCell(item, 'category'),
+                  _buildEditableCell(item, 'price'),
+                  _buildEditableCell(item, 'quantity'),
+                  _buildEditableCell(item, 'expiryDate'),
+                  _buildEditableCell(item, 'supplier'),
+                  _buildEditableCell(item, 'barcode'),
                   DataCell(
                     Row(
                       children: [

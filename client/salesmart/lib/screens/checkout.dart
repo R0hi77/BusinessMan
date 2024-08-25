@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+enum ItemCategory {others, electronics,groceries,clothing}
+
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({Key? key}) : super(key: key);
 
@@ -15,7 +17,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String? _paymentMethod;
   String _customerName = '';
   String _customerEmail = '';
- 
 
   late String _currentDate;
   late String _currentTime;
@@ -24,13 +25,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
   double _amountPaid = 0;
 
   final List<Map<String, dynamic>> _products = [
-    {'name': 'Product 1','description':'random', 'price': 20.0, 'quantity': 2},
-    {'name': 'Product 2','description':'random', 'price': 15.0, 'quantity': 1},
-    {'name': 'Product 3','description':'random', 'price': 30.0, 'quantity': 3},
+    {
+      'name': 'Product 1',
+      'description': 'random',
+      'category': ItemCategory.electronics, // Correct category type
+      'price': 20.0,
+      'quantity': 2
+    },
+    {
+      'name': 'Product 2',
+      'description': 'random',
+      'category': ItemCategory.groceries, // Correct category type
+      'price': 15.0,
+      'quantity': 1
+    },
+    {
+      'name': 'Product 3',
+      'description': 'random',
+      'category': ItemCategory.clothing, // Correct category type
+      'price': 30.0,
+      'quantity': 3
+    },
   ];
 
-  double get _subtotal => _products.fold(
-      0, (sum, product) => sum + (product['price'] * product['quantity']));
+  double get _subtotal =>
+      _products.fold(0, (sum, product) => sum + (product['price'] * product['quantity']));
   double get _tax => _subtotal * 0.15;
   double get _total => _subtotal + _tax;
 
@@ -67,8 +86,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           children: [
             Text("SaleSmart",
                 style: GoogleFonts.archivoBlack(
-                    textStyle:
-                        const TextStyle(fontSize: 30, color: Colors.black)))
+                    textStyle: const TextStyle(fontSize: 30, color: Colors.black)))
           ],
         ),
         toolbarHeight: MediaQuery.sizeOf(context).height * 0.12,
@@ -112,39 +130,32 @@ class _CheckoutPageState extends State<CheckoutPage> {
               // Customer Information
               const Text('Bill To:', style: TextStyle(fontWeight: FontWeight.bold)),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Customer Name',
-                border: OutlineInputBorder()),
-                
+                decoration: const InputDecoration(labelText: 'Customer Name', border: OutlineInputBorder()),
                 onChanged: (value) => _customerName = value,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(height: 20),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Customer Email',
-                border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Customer Email', border: OutlineInputBorder()),
                 onChanged: (value) => _customerEmail = value,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-              
               SizedBox(height: 50),
-
-              // Payment Method
-              
 
               // Product Table
               Table(
                 border: TableBorder.all(),
                 columnWidths: const {
-            0: FlexColumnWidth(2),  // Product name
-            1: FlexColumnWidth(3),  // Description
-            2: FlexColumnWidth(1),  // Quantity
-            3: FlexColumnWidth(1.5),  // Price
-            4: FlexColumnWidth(2)  // Amount
-          },
+                  0: FlexColumnWidth(2),  // Product name
+                  1: FlexColumnWidth(3),  // Description
+                  2: FlexColumnWidth(1),  // Quantity
+                  3: FlexColumnWidth(1.5),  // Price
+                  4: FlexColumnWidth(2)  // Amount
+                },
                 children: [
                   TableRow(
                     decoration: BoxDecoration(color: Colors.grey[200]),
-                    children:const  [
+                    children: const [
                       TableCell(child: Padding(
                         padding: EdgeInsets.all(8),
                         child: Text('Product', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -203,8 +214,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   children: [
                     // Text('Subtotal: GH₵${_subtotal.toStringAsFixed(2)}'),
                     // Text('Tax (15%): GH₵${_tax.toStringAsFixed(2)}'),
-                    Text('Total: GH₵${_total.toStringAsFixed(2)}', 
-                         style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Total: GH₵${_total.toStringAsFixed(2)}',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -216,8 +227,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   border: OutlineInputBorder(),
                 ),
                 value: _paymentMethod,
-                items: [ 'Mobile Money', 'Cash']
-                    .map((String value) {
+                items: ['Mobile Money', 'Cash'].map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(value),
@@ -233,7 +243,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
               const SizedBox(height: 16),
 
               // Additional fields based on payment method
-              
               if (_paymentMethod == 'Mobile Money') ...[
                 TextFormField(
                   decoration: const InputDecoration(
@@ -266,7 +275,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       child: Text(
                         'Balance: GH₵${(_amountPaid - _total).toStringAsFixed(2)}',
                         textAlign: TextAlign.center,
-                        style: const  TextStyle(fontSize: 18),
+                        style: const TextStyle(fontSize: 18),
                       ),
                     ),
                   ],
@@ -276,15 +285,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
               // Terms and Conditions
               const Text('Terms and Conditions:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text('1. Products purchased can not be returned after 24 hours'),
+              const Text('1. Products purchased cannot be returned after 24 hours'),
               const Text('2. Please include the invoice number on your check'),
               const SizedBox(height: 20),
 
               // Thank You Note
               const Center(
-                
-                child:  Text('Thank you for your business!',
-                style: TextStyle(fontStyle: FontStyle.italic)),
+                child: Text('Thank you for your business!',
+                    style: TextStyle(fontStyle: FontStyle.italic)),
               ),
               const SizedBox(height: 20),
 
@@ -295,11 +303,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     if (_formKey.currentState!.validate()) {
                       // Process the invoice
                       ScaffoldMessenger.of(context).showSnackBar(
-                       const  SnackBar(content: Text('Processing Invoice...')),
+                        const SnackBar(content: Text('Processing Invoice...')),
                       );
                     }
                   },
-                  
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
@@ -314,3 +321,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 }
+
+
+

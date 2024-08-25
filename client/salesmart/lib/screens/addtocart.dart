@@ -144,19 +144,20 @@ class _CartPageState extends State<CartPage> {
                               builder: (context) => const CheckoutPage(),
                             ));
                           },
-                          child: const Text(
-                            'Proceed to Checkout',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: const Text(
+                            'Checkout',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -177,6 +178,7 @@ class _CartPageState extends State<CartPage> {
                     itemCount: cartItems.length,
                     itemBuilder: (context, index) {
                       final item = cartItems[index];
+
                       return Card(
                         elevation: 5,
                         shape: RoundedRectangleBorder(
@@ -197,7 +199,8 @@ class _CartPageState extends State<CartPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Icon(
-                                  getItemIcon(item['category']),
+                                  //getItemIcon(item['category']),
+                                  Icons.abc,
                                   size: 40,
                                   color: Colors.grey[600],
                                 ),
@@ -227,14 +230,14 @@ class _CartPageState extends State<CartPage> {
                                                 showDialog(
                                                   context: context,
                                                   builder: (context) => AlertDialog(
-                                                    title: Text('Remove Item'),
-                                                    content: Text('Are you sure you want to remove this item?'),
+                                                    title: const Text('Remove Item'),
+                                                    content: const Text('Are you sure you want to remove this item?'),
                                                     actions: [
                                                       TextButton(
                                                         onPressed: () {
                                                           Navigator.of(context).pop();
                                                         },
-                                                        child: Text('Cancel'),
+                                                        child: const Text('Cancel'),
                                                       ),
                                                       TextButton(
                                                         onPressed: () {
@@ -243,7 +246,7 @@ class _CartPageState extends State<CartPage> {
                                                           });
                                                           Navigator.of(context).pop();
                                                         },
-                                                        child: Text('Remove'),
+                                                        child: const Text('Remove'),
                                                       ),
                                                     ],
                                                   ),
@@ -272,14 +275,14 @@ class _CartPageState extends State<CartPage> {
                                         showDialog(
                                           context: context,
                                           builder: (context) => AlertDialog(
-                                            title: Text('Remove Item'),
-                                            content: Text('Are you sure you want to remove this item?'),
+                                            title: const Text('Remove Item'),
+                                            content: const Text('Are you sure you want to remove this item?'),
                                             actions: [
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.of(context).pop();
                                                 },
-                                                child: Text('Cancel'),
+                                                child: const Text('Cancel'),
                                               ),
                                               TextButton(
                                                 onPressed: () {
@@ -288,7 +291,7 @@ class _CartPageState extends State<CartPage> {
                                                   });
                                                   Navigator.of(context).pop();
                                                 },
-                                                child: Text('Remove'),
+                                                child: const Text('Remove'),
                                               ),
                                             ],
                                           ),
