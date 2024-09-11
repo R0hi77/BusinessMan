@@ -92,7 +92,7 @@ class LoginScreen extends StatelessWidget {
                         onPressed: () {
                           // Add your navigation or action here
                           Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => const LoginPageManager()));
+                                builder: (context) => const LoginPageManager(token: '',)));
                         },
                       ),
                       SizedBox(
@@ -102,7 +102,7 @@ class LoginScreen extends StatelessWidget {
                         label: 'Log in as attendant',
                         onPressed: () {
                           Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => const LoginPageAttendant()));
+                                builder: (context) => const LoginPageAttendant(token: '',)));
                           // Add your navigation or action here
                         },
                       ),

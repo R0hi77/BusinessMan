@@ -1,37 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:salesmart/components/inventoryWIdget.dart';
+import 'package:salesmart/components/inventoryWidget.dart';
 import 'package:salesmart/screens/addtocart.dart';
 import 'package:salesmart/services/inventoryService.dart';
 
 class InventoryPage extends StatefulWidget {
-  InventoryPage({Key? key}) : super(key: key);
-  final InventoryService inventoryService = InventoryService();
+  final String token;
+
+  InventoryPage({Key? key, required this.token}) : super(key: key);
 
   @override
   State<InventoryPage> createState() => _InventoryPageState();
 }
 
 class _InventoryPageState extends State<InventoryPage> {
+  // Define the GlobalKey for InventoryTable
+  final GlobalKey<InventoryTableState> _inventoryTableKey = GlobalKey<InventoryTableState>();
+
   late final InventoryService inventoryService;
-  List<Map<String, dynamic>> selectedItems = [];
+  Map<String, int> cartItems = {}; // Map of item ID to quantity
+  String searchQuery = '';
+  late String token;
+  int totalCartItems = 0;
 
   @override
   void initState() {
     super.initState();
     inventoryService = InventoryService();
+    token = widget.token;
   }
 
-  void updateSelectedItems(List<Map<String, dynamic>> items) {
+  void addToCart(String itemId) {
     setState(() {
-      selectedItems = items;
+      cartItems[itemId] = (cartItems[itemId] ?? 0) + 1;
+      totalCartItems = cartItems.values.fold(0, (sum, quantity) => sum + quantity);
     });
   }
 
-  void proceedToCheckout() {
+  void proceedToCheckout() async {
+    List<Future<Map<String, dynamic>>> futures = cartItems.entries.map((entry) async {
+      final item = await inventoryService.getInventoryItemById(entry.key, token);
+      if (item != null) {
+        return {
+          ...item as Map<String, dynamic>,
+          'quantity': entry.value,
+        };
+      } else {
+        return <String, dynamic>{}; // Return an empty map if item is null
+      }
+    }).toList();
+
+    List<Map<String, dynamic>> selectedItems = await Future.wait(futures);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => CartPage(initialCartItems: selectedItems),
+        builder: (context) => CartPage(initialCartItems: selectedItems, token: token),
       ),
     );
   }
@@ -44,9 +66,9 @@ class _InventoryPageState extends State<InventoryPage> {
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(
-              Icons.arrow_left,
+              Icons.arrow_back,
               color: Colors.black,
-              size: 50,
+              size: 30,
             ),
             onPressed: () {
               Navigator.of(context).pop();
@@ -64,6 +86,45 @@ class _InventoryPageState extends State<InventoryPage> {
             )
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.shopping_cart),
+                  iconSize: 45,
+                  onPressed: totalCartItems > 0 ? proceedToCheckout : null,
+                ),
+                if (totalCartItems > 0)
+                  Positioned(
+                    right: 4,
+                    top: 8,
+                    child: Container(
+                      padding: EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '$totalCartItems',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
         toolbarHeight: MediaQuery.of(context).size.height * 0.12,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -81,77 +142,48 @@ class _InventoryPageState extends State<InventoryPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Padding(
-              padding: const EdgeInsets.all(30),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.68,
-                  ),
-                  Container(
-                    width: 300,
-                    height: 50,
-                    decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.all(Radius.circular(30)),
+              padding: const EdgeInsets.all(40.0),
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                child: Column(
+                  children: [
+                    InventoryTable(
+                      key: _inventoryTableKey, // Pass the key here
+                      onAddToCart: addToCart,
+                      searchQuery: searchQuery,
+                      token: token,
                     ),
-                    child: const TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Looking for anything ...',
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            style: BorderStyle.none,
-                            color: Colors.blue,
-                          ),
-                        ),
+                    SizedBox(height: 20), // Add some space between the table and the button
+                    ElevatedButton(
+                      onPressed: totalCartItems > 0 ? proceedToCheckout : null,
+                      child: Text('Proceed to Cart'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                        textStyle: TextStyle(fontSize: 20),
                       ),
                     ),
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  InkWell(
-                    onTap: () {},
-                    child: Container(
-                      width: 90,
-                      height: 50,
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                        color: Color.fromARGB(249, 139, 245, 144),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'search',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            fontSize: 18,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                    SizedBox(height: 20), // Add space between buttons
+                    ElevatedButton(
+                      onPressed: () async {
+                        // Call saveAllItems from InventoryWidget
+                        await _inventoryTableKey.currentState?.saveAllItems(token); // Correctly call saveAllItems
+                        // Optionally, show a snackbar or dialog indicating success
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('All items saved successfully!')),
+                        );
+                      },
+                      child: Text('Save All'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                        textStyle: TextStyle(fontSize: 20),
                       ),
                     ),
-                  )
-                ],
-              ),
-            ),
-            Container(
-              width: MediaQuery.of(context).size.width,
-              child: Column(
-                children: [
-                  InventoryTable(onItemsSelected: updateSelectedItems),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: selectedItems.isNotEmpty ? proceedToCheckout : null,
-                    child: Text('Proceed to Checkout (${selectedItems.length} items)'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

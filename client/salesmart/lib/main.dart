@@ -10,5 +10,6 @@ import 'package:salesmart/screens/dashboard2.dart';
 //import 'package:salesmart/welcomeback.dart';
 
 void main() {
-  runApp( MaterialApp(home: DashboardPage2()));
+  runApp( const MaterialApp(home: OnboardingPage(),
+  debugShowCheckedModeBanner: false,));
 }

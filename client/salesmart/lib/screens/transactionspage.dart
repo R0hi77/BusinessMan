@@ -4,7 +4,10 @@ import 'package:salesmart/components/transaction.dart';
 import 'package:salesmart/services/account_balance.dart';
 
 class TransactionsPage extends StatefulWidget {
-  const TransactionsPage({super.key});
+
+  final String token;
+
+  const TransactionsPage({super.key, required this.token});
 
   @override
   State<TransactionsPage> createState() => _TransactionsPageState();

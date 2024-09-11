@@ -3,9 +3,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:salesmart/screens/login_as_attendant.dart';
 import 'package:salesmart/screens/login_as_manager.dart';
 
-class LogInAsPage extends StatelessWidget {
-  const LogInAsPage({super.key});
+class LogInAsPage extends StatefulWidget {
+  final String token;
+  const LogInAsPage({Key? key, required this.token}) : super(key: key);
 
+  @override
+  _LogInAsPageState createState() => _LogInAsPageState();
+}
+
+class _LogInAsPageState extends State<LogInAsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,9 +86,11 @@ class LogInAsPage extends StatelessWidget {
                               ),
                               child: TextButton(
                                 onPressed: () {
-
-                                  Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (context) => const LoginPageManager()));
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) =>
+                                           LoginPageManager(
+                                            token: widget.token,
+                                          )));
                                 },
                                 child: const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -119,9 +127,9 @@ class LogInAsPage extends StatelessWidget {
                               ),
                               child: TextButton(
                                 onPressed: () {
-
-                                  Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (context) => const LoginPageAttendant()));
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) =>
+                                           LoginPageAttendant(token:widget.token)));
                                 },
                                 child: const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,

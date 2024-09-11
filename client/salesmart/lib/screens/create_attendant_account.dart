@@ -1,16 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:salesmart/screens/dashboard_attendant.dart';
+import 'package:salesmart/screens/dashboard2.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class LoginPageAttendant extends StatefulWidget {
+class AddAttendant extends StatefulWidget {
   final String token;
-  const LoginPageAttendant({Key? key, required this.token}) : super(key: key);
+  const AddAttendant({Key? key, required this.token}) : super(key: key);
 
   @override
-  _LoginPageAttendantState createState() => _LoginPageAttendantState();
+  State<AddAttendant> createState() => _AddAttendantState();
 }
 
-class _LoginPageAttendantState extends State<LoginPageAttendant> {
+class _AddAttendantState extends State<AddAttendant> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  Future<void> _createAttendantAccount() async {
+    if (_formKey.currentState!.validate()) {
+      const String apiUrl =
+          'http://localhost:5000/api/auth/attendantaccount'; // Replace with your actual endpoint
+
+      try {
+        final response = await http.post(
+          Uri.parse(apiUrl),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer ${widget.token}',
+          },
+          body: jsonEncode(<String, String>{
+            'name': _usernameController.text,
+            'password': _passwordController.text,
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          // Account created successfully
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Attendant account created successfully')),
+          );
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => DashboardPageManager(
+                    token: widget.token,
+                  )));
+        } else {
+          print(widget.token);
+          // If the server did not return a 201 CREATED response,
+          // then throw an exception.
+          throw Exception('Failed to create attendant account');
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,7 +78,7 @@ class _LoginPageAttendantState extends State<LoginPageAttendant> {
                         const TextStyle(fontSize: 30, color: Colors.black)))
           ],
         ),
-        toolbarHeight: MediaQuery.sizeOf(context).height * 0.12,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.12,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.only(
@@ -45,32 +93,32 @@ class _LoginPageAttendantState extends State<LoginPageAttendant> {
         children: [
           Center(
             child: Container(
-                height: MediaQuery.sizeOf(context).height * 0.65,
-                width: MediaQuery.sizeOf(context).width * 0.25,
-                decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(30))),
-                child: Column(children: [
+              height: MediaQuery.of(context).size.height * 0.65,
+              width: MediaQuery.of(context).size.width * 0.25,
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(30))),
+              child: Column(
+                children: [
                   const Icon(
                     Icons.supervised_user_circle,
                     size: 120,
                     color: Color.fromARGB(255, 35, 35, 36),
                   ),
                   const Text(
-                    "Attendant",
+                    "Add an attendant account ",
                     style: TextStyle(
                         color: Colors.purple,
                         fontSize: 20,
                         fontWeight: FontWeight.bold),
                   ),
                   Form(
+                    key: _formKey,
                     child: Column(
                       children: [
-                        const SizedBox(
-                          height: 80,
-                        ),
-                        // username
+                        const SizedBox(height: 80),
                         TextFormField(
+                          controller: _usernameController,
                           decoration: InputDecoration(
                             hintText: "Username",
                             border: OutlineInputBorder(
@@ -83,13 +131,10 @@ class _LoginPageAttendantState extends State<LoginPageAttendant> {
                             }
                             return null;
                           },
-                          onSaved: (value) {},
                         ),
-                        const SizedBox(
-                          height: 30,
-                        ),
-                        // password
+                        const SizedBox(height: 30),
                         TextFormField(
+                          controller: _passwordController,
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: "Password",
@@ -99,35 +144,28 @@ class _LoginPageAttendantState extends State<LoginPageAttendant> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return "You must enter a user name";
+                              return "Password field can not be empty";
                             }
                             return null;
                           },
-                          onSaved: (value) {},
                         ),
                         SizedBox(
-                          height: MediaQuery.sizeOf(context).height * 0.1,
+                          height: MediaQuery.of(context).size.height * 0.1,
                         ),
-                        // Submit Button
                         Container(
-                          width: MediaQuery.sizeOf(context).width * 0.2,
-                          height: MediaQuery.sizeOf(context).height * 0.065,
+                          width: MediaQuery.of(context).size.width * 0.2,
+                          height: MediaQuery.of(context).size.height * 0.065,
                           decoration: const BoxDecoration(
                             borderRadius: BorderRadius.all(Radius.circular(50)),
                             color: Colors.green,
                           ),
                           child: TextButton(
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => DashboardPageAttendant(
-                                        token: widget.token,
-                                      )));
-                            },
+                            onPressed: _createAttendantAccount,
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Log in",
+                                  "Register",
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 20,
@@ -141,28 +179,12 @@ class _LoginPageAttendantState extends State<LoginPageAttendant> {
                       ],
                     ),
                   ),
-                ])),
+                ],
+              ),
+            ),
           )
         ],
       ),
     );
   }
-}
-
-Widget _buildTextField({required String hint, bool obscureText = false}) {
-  return TextField(
-    obscureText: obscureText,
-    textAlign: TextAlign.center,
-    decoration: InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: Colors.black45),
-      filled: true,
-      fillColor: Colors.black12,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(40),
-        borderSide: BorderSide.none,
-      ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 20),
-    ),
-  );
 }

@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:salesmart/components/chartCard.dart';
 import 'package:salesmart/components/metricCard.dart';
-import 'package:salesmart/components/transaction.dart';
+//import 'package:salesmart/components/transaction.dart';
 import 'package:salesmart/screens/inventorypage.dart';
+import 'package:salesmart/screens/loginas.dart';
 import 'package:salesmart/screens/transactionspage.dart';
 import 'package:salesmart/screens/analytics.dart';
-import 'package:salesmart/screens/login_shop.dart';
+//import 'package:salesmart/screens/login_shop.dart';
 import 'package:salesmart/services/top_products.dart'; // Import the ApiService
 import 'package:salesmart/services/sales_trends.dart';
 import 'package:salesmart/services/attendant_details.dart';
 import 'package:salesmart/services/sales_summaries.dart';
 
 class DashboardPageAttendant extends StatefulWidget {
+  final String token;
+
+  const DashboardPageAttendant({Key? key, required this.token}) : super(key: key);
   @override
+  
   _DashboardPageAttendantState createState() => _DashboardPageAttendantState();
 }
 
@@ -32,14 +37,14 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
   }
 
   void _fetchData() {
-    String token = 'YOUR_JWT_TOKEN'; // Implement a way to get the current token
+    String token = widget.token; // Implement a way to get the current token
     topProductsData = ApiService.fetchTopProducts('week', token);
     salesTrendData = ApiService.fetchTopProducts(
         'month', token); // Assuming you want monthly data for sales trend
   }
 
   void _TrendData() {
-    String token = 'YOUR_JWT_TOKEN'; // Implement a way to get the current token
+    String token = widget.token; // Implement a way to get the current token
     salesTrendData = ApiTrendService.fetchDailySales(token);
   }
 
@@ -133,20 +138,26 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
           _buildDrawerItem(
             icon: Icons.inventory,
             text: 'Inventory',
-            onTap: () => Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => InventoryPage())),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => InventoryPage(
+                      token: widget.token,
+                    ))),
           ),
           _buildDrawerItem(
             icon: Icons.monetization_on,
             text: 'Transactions',
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => const TransactionsPage())),
+                builder: (context) =>  TransactionsPage(
+                      token: widget.token,
+                    ))),
           ),
           _buildDrawerItem(
             icon: Icons.analytics,
             text: 'Reports & Analytics',
-            onTap: () => Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => AnalyticsPage())),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => AnalyticsPage(
+                      token: widget.token,
+                    ))),
           ),
           _buildDrawerItem(
             icon: Icons.notification_add,
@@ -164,9 +175,9 @@ class _DashboardPageAttendantState extends State<DashboardPageAttendant> {
           ),
           _buildDrawerItem(
             icon: Icons.settings,
-            text: 'Settings',
+            text: 'Switch Account',
             onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const LoginShop())),
+                MaterialPageRoute(builder: (context) =>  LogInAsPage(token:widget.token))),
           ),
           _buildDrawerItem(
             icon: Icons.help,

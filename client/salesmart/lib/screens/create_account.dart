@@ -189,7 +189,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                             int statusCode = await postData();
                             if (statusCode == 200) {
                               Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => const LoginPageManager(),
+                                builder: (context) =>  LoginPageManager(token: widget.token,),
                               ));
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:salesmart/components/metricCard.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:salesmart/components/analticsbarchart.dart';
+import 'package:salesmart/components/analyticsbarchartnew.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:salesmart/components/salestrend.dart';
 
 class AnalyticsPage extends StatefulWidget {
-  AnalyticsPage({super.key});
+  final String token;
+
+  AnalyticsPage({super.key,required this.token});
 
   @override
   State<AnalyticsPage> createState() => _AnalyticsPageState();
@@ -27,37 +28,69 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   List<FlSpot> _salesTrendData = [];
   double _maxSales = 0;
 
+  // New state variables for metric data
+  int _transactionsCount = 0;
+  double _transactionsValue = 0.0;
+  double _profits = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchMetricData();
+    fetchGraphData(_dropdownvalue);
+    fetchTrendData(_dropdownvaluetrends);
+  }
+
+  Future<void> fetchMetricData() async {
+    final response = await http.get(Uri.parse('http://localhost:5000/api/analytics/daily_summary'));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        _transactionsCount = data['transactionsCount'];
+        _transactionsValue = data['transactionsValue'].toDouble();
+        _profits = data['profits'].toDouble();
+      });
+    } else {
+      print('Failed to fetch metric data');
+    }
+  }
+
   Future<void> fetchTrendData(String selectedValue) async {
-    final response = await http.get(
-        Uri.parse('https://your-api.com/trends-data?value=$selectedValue'));
+  final response = await http.get(
+    Uri.parse('https://your-api.com/api/analytics/sales_trend/$selectedValue'),
+     headers: {'Authorization': 'Bearer ${widget.token}'},
+  );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        _salesTrendData = List<FlSpot>.from(data['salesTrend'].map(
-            (point) => FlSpot(point['x'].toDouble(), point['y'].toDouble())));
-        _maxSales = data['maxSales'].toDouble();
-      });
-    } else {
-      print('Failed to fetch graph data');
-    }
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    setState(() {
+      _salesTrendData = List<FlSpot>.from(data['salesTrend'].map(
+          (point) => FlSpot(point['x'].toDouble(), point['y'].toDouble())));
+      _maxSales = data['maxSales'].toDouble();
+    });
+  } else {
+    print('Failed to fetch trend data');
   }
+}
 
-  Future<void> fetchGraphData(String selectedValue) async {
-    final response = await http
-        .get(Uri.parse('https://your-api.com/graph-data?value=$selectedValue'));
+Future<void> fetchGraphData(String selectedValue) async {
+  final response = await http.get(
+    Uri.parse('https://localhost:5000/api/analytics/top_products/$selectedValue'),
+    headers: {'Authorization': 'Bearer ${widget.token}'},
+  );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        _productNames = List<String>.from(data['productNames']);
-        _salesNumbers = List<int>.from(data['salesNumbers']);
-        _max = data['max'].toDouble();
-      });
-    } else {
-      print('Failed to fetch graph data');
-    }
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    setState(() {
+      _productNames = List<String>.from(data['productNames']);
+      _salesNumbers = List<int>.from(data['salesNumbers']);
+      _max = data['max'].toDouble();
+    });
+  } else {
+    print('Failed to fetch graph data');
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -106,21 +139,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   MetricCard(
                     icon: const Icon(Icons.monetization_on),
                     title: "Transactions Value",
-                    value: "GH₵....",
+                    value: "GH₵${_transactionsValue.toStringAsFixed(2)}",
                     color: const Color.fromARGB(251, 250, 206, 210),
                     width: 300,
                   ),
                   MetricCard(
                     icon: const Icon(Icons.monetization_on),
                     title: "Profits",
-                    value: "GH₵....",
+                    value: "GH₵${_profits.toStringAsFixed(2)}",
                     color: const Color.fromARGB(253, 255, 241, 150),
                     width: 300,
                   ),
                   MetricCard(
-                    icon: const Icon(Icons.monetization_on),
-                    title: "Profits",
-                    value: "GH₵....",
+                    icon: const Icon(Icons.shopping_cart),
+                    title: "Number of Transactions",
+                    value: _transactionsCount.toString(),
                     color: const Color.fromARGB(250, 141, 255, 189),
                     width: 300,
                   ),

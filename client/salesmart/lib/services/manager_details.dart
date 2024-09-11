@@ -5,7 +5,7 @@ class ApiProfileService {
   static const String baseUrl = 'http://localhost:5000/api/profile';  // Replace with your actual API URL
 
   static Future<Map<String, dynamic>> fetchShopDetails(String token) async {
-    const String apiUrl = '$baseUrl/attendant';
+    const String apiUrl = '$baseUrl/manager';
 
     try {
       final response = await http.get(

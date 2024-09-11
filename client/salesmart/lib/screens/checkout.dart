@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:salesmart/services/shopAccountDetails.dart'; // This should contain fetchAccountDetails function
+import 'package:salesmart/services/transactionData.dart'; // This should contain postTransactionData function
 
-enum ItemCategory {others, electronics,groceries,clothing}
+enum ItemCategory { others, electronics, groceries, clothing }
 
 class CheckoutPage extends StatefulWidget {
-  const CheckoutPage({Key? key}) : super(key: key);
+  final List<Map<String, dynamic>> cartItems;
+  final double total;
+  final String token;
+
+  const CheckoutPage({Key? key, required this.cartItems, required this.total, required this.token})
+      : super(key: key);
 
   @override
   _CheckoutPageState createState() => _CheckoutPageState();
@@ -17,47 +24,33 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String? _paymentMethod;
   String _customerName = '';
   String _customerEmail = '';
+  String _customerPhoneNumber = '';
 
   late String _currentDate;
   late String _currentTime;
   late String _transactionId;
 
+  late String shop_name ;
+  late String business_address = 'shop address goes here';
+  late String shop_number = 'shop number goes here';
+  late String shop_email = 'shop email goes here';
+
   double _amountPaid = 0;
 
-  final List<Map<String, dynamic>> _products = [
-    {
-      'name': 'Product 1',
-      'description': 'random',
-      'category': ItemCategory.electronics, // Correct category type
-      'price': 20.0,
-      'quantity': 2
-    },
-    {
-      'name': 'Product 2',
-      'description': 'random',
-      'category': ItemCategory.groceries, // Correct category type
-      'price': 15.0,
-      'quantity': 1
-    },
-    {
-      'name': 'Product 3',
-      'description': 'random',
-      'category': ItemCategory.clothing, // Correct category type
-      'price': 30.0,
-      'quantity': 3
-    },
-  ];
+  // Reference to the cart items passed from CartPage
+  List<Map<String, dynamic>> get _products => widget.cartItems;
 
-  double get _subtotal =>
-      _products.fold(0, (sum, product) => sum + (product['price'] * product['quantity']));
-  double get _tax => _subtotal * 0.15;
-  double get _total => _subtotal + _tax;
+  double get _subtotal => _products.fold(
+      0, (sum, product) => sum + (product['price'] * product['quantity']));
+  double get _tax => _subtotal * 0.15; // Optional: If tax is to be considered
+  double get _total => widget.total; // Use the total passed from CartPage
 
   @override
   void initState() {
     super.initState();
     _updateDateTime();
     _generateTransactionId();
+    getAccountDetails(); // Call to fetch shop details
   }
 
   void _updateDateTime() {
@@ -69,6 +62,54 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void _generateTransactionId() {
     var uuid = const Uuid();
     _transactionId = uuid.v4().substring(0, 8).toUpperCase();
+  }
+
+  Future <void> getAccountDetails() async {
+    String jwtToken =
+        'your_jwt_token_here'; // Replace with the actual JWT token
+    try {
+      Map<String, dynamic> accountDetails = await fetchAccountDetails(jwtToken);
+      shop_name = accountDetails['shop'];
+      business_address = accountDetails['address'];
+      shop_number = accountDetails['number'];
+      shop_email = accountDetails['email'];
+    } catch (e) {
+      print('Error fetching account details: $e');
+    }
+  }
+
+  Future<void> _submitTransaction() async {
+    if (_formKey.currentState!.validate()) {
+      String jwtToken =
+          'your_jwt_token_here'; // Replace with the actual JWT token
+
+      Map<String, dynamic> transactionData = {
+        'number': _customerPhoneNumber,
+        'cash_in': _total,
+        'payment_type': _paymentMethod,
+        'balance': _amountPaid - _total,
+        'items': _products
+            .map((product) => {
+                  'product_name': product['name'],
+                  'quantity': product['quantity'],
+                  'price_per_item': product['price'],
+                })
+            .toList(),
+      };
+
+      int statusCode = await postTransactionData(transactionData, jwtToken);
+      if (statusCode == 200) {
+        // Transaction posted successfully
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction submitted successfully')),
+        );
+      } else {
+        // Handle failure
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit transaction')),
+        );
+      }
+    }
   }
 
   @override
@@ -86,7 +127,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
           children: [
             Text("SaleSmart",
                 style: GoogleFonts.archivoBlack(
-                    textStyle: const TextStyle(fontSize: 30, color: Colors.black)))
+                    textStyle:
+                        const TextStyle(fontSize: 30, color: Colors.black)))
           ],
         ),
         toolbarHeight: MediaQuery.sizeOf(context).height * 0.12,
@@ -112,9 +154,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 'Your Shop Name',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              Text('123 Business Street, City, Country'),
-              Text('Phone: +1 234 567 8900'),
-              Text('Email: shop@example.com'),
+              Text('${business_address}, Ghana'),
+              Text('Phone: ${shop_number}'),
+              Text('Email: ${shop_email}'),
               SizedBox(height: 20),
 
               // Invoice Details
@@ -128,16 +170,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
               SizedBox(height: 20),
 
               // Customer Information
-              const Text('Bill To:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Bill To:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Customer Name', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Customer Name', border: OutlineInputBorder()),
                 onChanged: (value) => _customerName = value,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Customer Email', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Customer Email', border: OutlineInputBorder()),
                 onChanged: (value) => _customerEmail = value,
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                decoration: const InputDecoration(
+                    labelText: 'Customer Phone Number',
+                    border: OutlineInputBorder()),
+                onChanged: (value) => _customerPhoneNumber = value,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
               SizedBox(height: 50),
@@ -146,62 +199,81 @@ class _CheckoutPageState extends State<CheckoutPage> {
               Table(
                 border: TableBorder.all(),
                 columnWidths: const {
-                  0: FlexColumnWidth(2),  // Product name
-                  1: FlexColumnWidth(3),  // Description
-                  2: FlexColumnWidth(1),  // Quantity
-                  3: FlexColumnWidth(1.5),  // Price
-                  4: FlexColumnWidth(2)  // Amount
+                  0: FlexColumnWidth(2), // Product name
+                  1: FlexColumnWidth(3), // Description
+                  2: FlexColumnWidth(1), // Quantity
+                  3: FlexColumnWidth(1.5), // Price
+                  4: FlexColumnWidth(2) // Amount
                 },
                 children: [
                   TableRow(
                     decoration: BoxDecoration(color: Colors.grey[200]),
                     children: const [
-                      TableCell(child: Padding(
+                      TableCell(
+                          child: Padding(
                         padding: EdgeInsets.all(8),
-                        child: Text('Product', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text('Product',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       )),
-                      TableCell(child: Padding(
+                      TableCell(
+                          child: Padding(
                         padding: EdgeInsets.all(8),
-                        child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text('Description',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       )),
-                      TableCell(child: Padding(
+                      TableCell(
+                          child: Padding(
                         padding: EdgeInsets.all(8),
-                        child: Text('Qty', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text('Qty',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       )),
-                      TableCell(child: Padding(
+                      TableCell(
+                          child: Padding(
                         padding: EdgeInsets.all(8),
-                        child: Text('Price', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text('Price',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       )),
-                      TableCell(child: Padding(
+                      TableCell(
+                          child: Padding(
                         padding: EdgeInsets.all(8),
-                        child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text('Amount',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       )),
                     ],
                   ),
-                  ..._products.map((product) => TableRow(
-                    children: [
-                      TableCell(child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(product['name']),
-                      )),
-                      TableCell(child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(product['description']),
-                      )),
-                      TableCell(child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(product['quantity'].toString()),
-                      )),
-                      TableCell(child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text('GH₵${product['price'].toStringAsFixed(2)}'),
-                      )),
-                      TableCell(child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text('GH₵${(product['price'] * product['quantity']).toStringAsFixed(2)}'),
-                      )),
-                    ],
-                  )).toList(),
+                  ..._products
+                      .map((product) => TableRow(
+                            children: [
+                              TableCell(
+                                  child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Text(product['name']),
+                              )),
+                              TableCell(
+                                  child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Text(product['description']),
+                              )),
+                              TableCell(
+                                  child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Text(product['quantity'].toString()),
+                              )),
+                              TableCell(
+                                  child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Text(
+                                    'GH₵${product['price'].toStringAsFixed(2)}'),
+                              )),
+                              TableCell(
+                                  child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Text(
+                                    'GH₵${(product['price'] * product['quantity']).toStringAsFixed(2)}'),
+                              )),
+                            ],
+                          ))
+                      .toList(),
                 ],
               ),
               const SizedBox(height: 20),
@@ -212,8 +284,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    // Text('Subtotal: GH₵${_subtotal.toStringAsFixed(2)}'),
-                    // Text('Tax (15%): GH₵${_tax.toStringAsFixed(2)}'),
                     Text('Total: GH₵${_total.toStringAsFixed(2)}',
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
@@ -249,6 +319,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     labelText: 'Phone Number',
                     border: OutlineInputBorder(),
                   ),
+                  onChanged: (value) => _customerPhoneNumber = value,
                   validator: (value) => value!.isEmpty ? 'Required' : null,
                 ),
               ],
@@ -267,7 +338,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             _amountPaid = double.tryParse(value) ?? 0;
                           });
                         },
-                        validator: (value) => value!.isEmpty ? 'Required' : null,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -284,8 +356,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
               const SizedBox(height: 20),
 
               // Terms and Conditions
-              const Text('Terms and Conditions:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text('1. Products purchased cannot be returned after 24 hours'),
+              const Text('Terms and Conditions:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                  '1. Products purchased cannot be returned after 24 hours'),
               const Text('2. Please include the invoice number on your check'),
               const SizedBox(height: 20),
 
@@ -299,17 +373,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
               // Submit Button
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // Process the invoice
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Processing Invoice...')),
-                      );
-                    }
-                  },
+                  onPressed: _submitTransaction,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 50, vertical: 20),
                   ),
                   child: const Text('Generate Invoice'),
                 ),
@@ -321,6 +389,3 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 }
-
-
-

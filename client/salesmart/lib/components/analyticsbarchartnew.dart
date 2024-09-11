@@ -1,39 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-class SalesBarChartNew extends StatefulWidget {
-  final List<String> productNames;
-  final List<int> salesNumbers;
-  final double max;
+class SalesBarChart extends StatefulWidget {
+  final List<String> initialProductNames;
+  final List<int> initialSalesNumbers;
+  final double initialMax;
 
-  SalesBarChartNew({
-    required this.productNames,
-    required this.salesNumbers,
-    required this.max,
+  SalesBarChart({
+    required this.initialProductNames,
+    required this.initialSalesNumbers,
+    required this.initialMax,
   });
 
   @override
   _SalesBarChartState createState() => _SalesBarChartState();
 }
 
-class _SalesBarChartState extends State<SalesBarChartNew> {
-  late List<String> _productNames;
-  late List<int> _salesNumbers;
-  late double _max;
+class _SalesBarChartState extends State<SalesBarChart> {
+  late List<String> productNames;
+  late List<int> salesNumbers;
+  late double max;
 
   @override
   void initState() {
     super.initState();
-    _productNames = widget.productNames;
-    _salesNumbers = widget.salesNumbers;
-    _max = widget.max;
+    productNames = widget.initialProductNames;
+    salesNumbers = widget.initialSalesNumbers;
+    max = widget.initialMax;
   }
 
   void updateData(List<String> newProductNames, List<int> newSalesNumbers, double newMax) {
     setState(() {
-      _productNames = newProductNames;
-      _salesNumbers = newSalesNumbers;
-      _max = newMax;
+      productNames = newProductNames;
+      salesNumbers = newSalesNumbers;
+      max = newMax;
     });
   }
 
@@ -72,13 +72,13 @@ class _SalesBarChartState extends State<SalesBarChartNew> {
               showTitles: true,
               getTitlesWidget: (value, meta) {
                 int index = value.toInt();
-                if (index < 0 || index >= _productNames.length) {
+                if (index < 0 || index >= productNames.length) {
                   return Container();
                 }
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                    _productNames[index],
+                    productNames[index],
                     style: const TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
@@ -99,18 +99,18 @@ class _SalesBarChartState extends State<SalesBarChartNew> {
   }
 
   List<BarChartGroupData> _buildBarGroups() {
-    return List.generate(_productNames.length, (index) {
+    return List.generate(productNames.length, (index) {
       return BarChartGroupData(
         x: index,
         barRods: [
           BarChartRodData(
-            toY: _salesNumbers[index].toDouble(),
+            toY: salesNumbers[index].toDouble(),
             color: Colors.red,
             width: 30,
             borderRadius: BorderRadius.circular(5),
             backDrawRodData: BackgroundBarChartRodData(
               show: true,
-              toY: _max,
+              toY: max,
               color: Colors.pink[50],
             ),
           ),

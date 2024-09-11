@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class InventoryService {
-  final String baseUrl = 'https://yourapi.com'; // Replace with your actual API base URL
+  final String baseUrl = 'http://localhost:5000/api/inventory'; // Replace with your actual API base URL
 
   Future<Map<String, dynamic>?> getInventoryItemById(String id, String token) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/inventory/$id'),
+        Uri.parse('$baseUrl/$id'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -30,7 +30,7 @@ class InventoryService {
   Future<List<Map<String, dynamic>>?> getInventoryList(String token) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/inventory/'),
+        Uri.parse('$baseUrl/'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -54,7 +54,7 @@ class InventoryService {
   Future<bool> addInventoryItem(Map<String, dynamic> item, String token) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/inventory/'),
+        Uri.parse('$baseUrl/'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ class InventoryService {
   Future<bool> updateInventoryItem(Map<String, dynamic> item, String token) async {
     try {
       final response = await http.put(
-        Uri.parse('$baseUrl/inventory/${item['id']}'),
+        Uri.parse('$baseUrl/${item['id']}'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ class InventoryService {
   Future<bool> deleteInventoryItem(String id, String token) async {
     try {
       final response = await http.delete(
-        Uri.parse('$baseUrl/inventory/$id'),
+        Uri.parse('$baseUrl/$id'),
         headers: {
           'Authorization': 'Bearer $token',
         },
